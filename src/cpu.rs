@@ -1,21 +1,21 @@
 use crate::{Read, Write};
 use crate::bus::Bus;
 
-pub struct CPU<'a> {
-    pub bus: Option<&'a Bus<'a>>,
+pub struct CPU {
+    pub bus: Option<Box<Bus>>,
 
-    acc_reg: u8,
-    x_reg: u8,
-    y_reg: u8,
-    stk_ptr: u8,
-    pgrm_ctr: u16,
-    status: u8,
+    pub acc_reg: u8,
+    pub x_reg: u8,
+    pub y_reg: u8,
+    pub stk_ptr: u8,
+    pub pgrm_ctr: u16,
+    pub status: u8,
 
-    fetched: u8,
-    addr_abs: u16,
-    addr_rel: u16,
-    opcode: u8,
-    cycles: u8,
+    pub fetched: u8,
+    pub addr_abs: u16,
+    pub addr_rel: u16,
+    pub opcode: u8,
+    pub cycles: u8,
 }
 
 enum StatusFlags {
@@ -29,97 +29,25 @@ enum StatusFlags {
     N = 1 << 7,
 }
 
-pub enum AddressingMode {
-    IMP,
-    IMM,
-    ZP0,
-    ZPX,
-    ZPY,
-    REL,
-    ABS,
-    ABX,
-    ABY,
-    IND,
-    IZX,
-    IZY,
-}
-
-pub enum Opcode {
-    ADC,
-    AND,
-    ASL,
-    BCC,
-    BCS,
-    BEQ,
-    BIT,
-    BMI,
-    BNE,
-    BPL,
-    BRK,
-    BVC,
-    BVS,
-    CLC,
-    CLD,
-    CLI,
-    CLV,
-    CMP,
-    CPX,
-    CPY,
-    DEC,
-    DEX,
-    DEY,
-    EOR,
-    INC,
-    INX,
-    INY,
-    JMP,
-    JSR,
-    LDA,
-    LDX,
-    LDY,
-    LSR,
-    NOP,
-    ORA,
-    PHA,
-    PHP,
-    PLA,
-    PLP,
-    ROL,
-    ROR,
-    RTI,
-    RTS,
-    SBC,
-    SEC,
-    SED,
-    SEI,
-    STA,
-    STX,
-    STY,
-    TAX,
-    TAY,
-    TSX,
-    TXA,
-    TXS,
-    TYA,
-
-    XXX
-}
-
 impl Read for CPU {
     fn read(&self, addr: u16, _read_only: bool) -> u8 {
-        self.bus.expect("no bus connected").read(addr, _read_only)
+        self.bus.as_ref().expect("no bus connected").read(addr, _read_only)
     }
 }
 
 impl Write for CPU {
-    fn write(&self, addr: u16, data: u8) -> () {
-        self.bus.expect("no bus connected").write(addr, data)
+    fn write(&mut self, addr: u16, data: u8) {
+        self.bus.as_mut().expect("no bus connected").write(addr, data)
     }
 }
 
 impl CPU {
-    pub fn connect_bus(&mut self, n: &Bus) {
-        self.bus = Option::from(n)
+    fn clock(&mut self) {
+        if self.cycles == 0 {
+            self.opcode = self.read(self.pgrm_ctr, false);
+            self.pgrm_ctr += 1;
+            self.cycles = self.lookup(self.opcode).cycles
+        }
     }
 }
 
@@ -141,59 +69,4 @@ impl Default for CPU {
         }
     }
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 

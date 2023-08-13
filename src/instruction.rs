@@ -1,13 +1,13 @@
-use crate::cpu::{AddressingMode, CPU, Opcode};
+use crate::cpu::CPU;
 
-struct Instruction {
+pub struct Instruction {
     opcode: Opcode,
     addressing_mode: AddressingMode,
-    cycles: u8,
+    pub cycles: u8,
 }
 
 impl CPU {
-    fn lookup(n: u8) -> Instruction {
+    pub fn lookup(&self, n: u8) -> Instruction {
         match n {
             0x00 => Instruction {
                 opcode: Opcode::BRK,
@@ -771,4 +771,80 @@ impl CPU {
             },
         }
     }
+}
+
+pub enum AddressingMode {
+    IMP,
+    IMM,
+    ZP0,
+    ZPX,
+    ZPY,
+    REL,
+    ABS,
+    ABX,
+    ABY,
+    IND,
+    IZX,
+    IZY,
+}
+
+pub enum Opcode {
+    ADC,
+    AND,
+    ASL,
+    BCC,
+    BCS,
+    BEQ,
+    BIT,
+    BMI,
+    BNE,
+    BPL,
+    BRK,
+    BVC,
+    BVS,
+    CLC,
+    CLD,
+    CLI,
+    CLV,
+    CMP,
+    CPX,
+    CPY,
+    DEC,
+    DEX,
+    DEY,
+    EOR,
+    INC,
+    INX,
+    INY,
+    JMP,
+    JSR,
+    LDA,
+    LDX,
+    LDY,
+    LSR,
+    NOP,
+    ORA,
+    PHA,
+    PHP,
+    PLA,
+    PLP,
+    ROL,
+    ROR,
+    RTI,
+    RTS,
+    SBC,
+    SEC,
+    SED,
+    SEI,
+    STA,
+    STX,
+    STY,
+    TAX,
+    TAY,
+    TSX,
+    TXA,
+    TXS,
+    TYA,
+
+    XXX,
 }
