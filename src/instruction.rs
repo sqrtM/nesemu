@@ -1,3 +1,4 @@
+use crate::addressing_mode::AddressingMode;
 use crate::cpu::CPU;
 
 pub struct Instruction {
@@ -771,21 +772,6 @@ impl CPU {
             },
         }
     }
-}
-
-pub enum AddressingMode {
-    IMP,
-    IMM,
-    ZP0,
-    ZPX,
-    ZPY,
-    REL,
-    ABS,
-    ABX,
-    ABY,
-    IND,
-    IZX,
-    IZY,
 }
 
 pub enum Opcode {
