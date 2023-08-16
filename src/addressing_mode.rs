@@ -1,6 +1,7 @@
 use crate::cpu::CPU;
 use crate::Read;
 
+#[derive(PartialEq)]
 pub enum AddressingMode {
     IMP,
     IMM,

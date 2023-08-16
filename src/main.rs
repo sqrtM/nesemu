@@ -4,6 +4,7 @@ mod cpu;
 mod bus;
 mod instruction;
 mod addressing_mode;
+mod op_code;
 
 pub trait Read {
     fn read(&self, addr: u16, _read_only: bool) -> u8;

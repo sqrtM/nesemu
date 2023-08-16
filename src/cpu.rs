@@ -1,4 +1,5 @@
 use crate::{Read, Write};
+use crate::addressing_mode::AddressingMode;
 use crate::bus::Bus;
 
 pub struct CPU {
@@ -18,15 +19,30 @@ pub struct CPU {
     pub cycles: u8,
 }
 
-enum StatusFlags {
-    C = 1 << 0,
-    Z = 1 << 1,
-    I = 1 << 2,
-    D = 1 << 3,
-    B = 1 << 4,
-    U = 1 << 5,
-    V = 1 << 6,
-    N = 1 << 7,
+pub enum StatusFlag {
+    C,
+    Z,
+    I,
+    D,
+    B,
+    U,
+    V,
+    N,
+}
+
+impl StatusFlag {
+    fn bit(&self) -> u8 {
+        match self {
+            StatusFlag::C => 1 << 0,
+            StatusFlag::Z => 1 << 1,
+            StatusFlag::I => 1 << 2,
+            StatusFlag::D => 1 << 3,
+            StatusFlag::B => 1 << 4,
+            StatusFlag::U => 1 << 5,
+            StatusFlag::V => 1 << 6,
+            StatusFlag::N => 1 << 7,
+        }
+    }
 }
 
 impl Read for CPU {
@@ -47,6 +63,31 @@ impl CPU {
             self.opcode = self.read(self.pgrm_ctr, false);
             self.pgrm_ctr += 1;
             self.cycles = self.lookup(self.opcode).cycles
+        }
+    }
+
+    pub(crate) fn fetch(&mut self) -> u8 {
+        if !(self.lookup(self.opcode).addressing_mode == AddressingMode::IMP) {
+            self.fetched = self.read(self.addr_abs, false);
+        }
+        self.fetched
+    }
+}
+
+impl CPU {
+    pub(crate) fn get_flag(&self, flag: StatusFlag) -> u8 {
+        if (self.status & flag.bit()) > 0 {
+            1
+        } else {
+            0
+        }
+    }
+
+    pub(crate) fn set_flag(&mut self, flag: StatusFlag, set: bool) {
+        if set {
+            self.status |= flag.bit()
+        } else {
+            self.status &= !flag.bit()
         }
     }
 }
