@@ -1,4 +1,6 @@
+use crate::addressing_mode::AddressingMode;
 use crate::cpu::{CPU, StatusFlag};
+use crate::Write;
 
 pub enum Opcode {
     ADC,
@@ -75,8 +77,26 @@ impl CPU {
                 self.acc_reg = (tmp & 0xFF) as u8;
                 1
             }
-            Opcode::AND => {}
-            Opcode::ASL => {}
+            Opcode::AND => {
+                self.fetch();
+                self.acc_reg = self.acc_reg & self.fetched;
+                self.set_flag(StatusFlag::Z, self.acc_reg == 0x00);
+                self.set_flag(StatusFlag::N, self.acc_reg & 0x80 == 1);
+                1
+            }
+            Opcode::ASL => {
+                self.fetch();
+                let tmp: u16 = (self.fetched << 1) as u16;
+                self.set_flag(StatusFlag::C, (tmp & 0xFF00) > 0);
+                self.set_flag(StatusFlag::Z, (tmp & 0x00FF) == 0x00);
+                self.set_flag(StatusFlag::N, tmp & 0x80 == 1);
+                if self.lookup(self.opcode).addressing_mode == AddressingMode::IMP {
+                    self.acc_reg = (tmp & 0x00FF) as u8;
+                } else {
+                    self.write(self.addr_abs, (tmp & 0x00FF) as u8);
+                }
+                0
+            }
             Opcode::BCC => {}
             Opcode::BCS => {}
             Opcode::BEQ => {}
