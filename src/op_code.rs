@@ -2,6 +2,7 @@ use crate::addressing_mode::AddressingMode;
 use crate::cpu::{CPU, StatusFlag};
 use crate::Write;
 
+#[derive(Clone)]
 pub enum Opcode {
     ADC,
     AND,
@@ -97,46 +98,46 @@ impl CPU {
                 }
                 0
             }
-            Opcode::BCC => {}
-            Opcode::BCS => {}
-            Opcode::BEQ => {}
-            Opcode::BIT => {}
-            Opcode::BMI => {}
-            Opcode::BNE => {}
-            Opcode::BPL => {}
-            Opcode::BRK => {}
-            Opcode::BVC => {}
-            Opcode::BVS => {}
-            Opcode::CLC => {}
-            Opcode::CLD => {}
-            Opcode::CLI => {}
-            Opcode::CLV => {}
-            Opcode::CMP => {}
-            Opcode::CPX => {}
-            Opcode::CPY => {}
-            Opcode::DEC => {}
-            Opcode::DEX => {}
-            Opcode::DEY => {}
-            Opcode::EOR => {}
-            Opcode::INC => {}
-            Opcode::INX => {}
-            Opcode::INY => {}
-            Opcode::JMP => {}
-            Opcode::JSR => {}
-            Opcode::LDA => {}
-            Opcode::LDX => {}
-            Opcode::LDY => {}
-            Opcode::LSR => {}
-            Opcode::NOP => {}
-            Opcode::ORA => {}
-            Opcode::PHA => {}
-            Opcode::PHP => {}
-            Opcode::PLA => {}
-            Opcode::PLP => {}
-            Opcode::ROL => {}
-            Opcode::ROR => {}
-            Opcode::RTI => {}
-            Opcode::RTS => {}
+            //Opcode::BCC => {}
+            //Opcode::BCS => {}
+            //Opcode::BEQ => {}
+            //Opcode::BIT => {}
+            //Opcode::BMI => {}
+            //Opcode::BNE => {}
+            //Opcode::BPL => {}
+            //Opcode::BRK => {}
+            //Opcode::BVC => {}
+            //Opcode::BVS => {}
+            //Opcode::CLC => {}
+            //Opcode::CLD => {}
+            //Opcode::CLI => {}
+            //Opcode::CLV => {}
+            //Opcode::CMP => {}
+            //Opcode::CPX => {}
+            //Opcode::CPY => {}
+            //Opcode::DEC => {}
+            //Opcode::DEX => {}
+            //Opcode::DEY => {}
+            //Opcode::EOR => {}
+            //Opcode::INC => {}
+            //Opcode::INX => {}
+            //Opcode::INY => {}
+            //Opcode::JMP => {}
+            //Opcode::JSR => {}
+            //Opcode::LDA => {}
+            //Opcode::LDX => {}
+            //Opcode::LDY => {}
+            //Opcode::LSR => {}
+            //Opcode::NOP => {}
+            //Opcode::ORA => {}
+            //Opcode::PHA => {}
+            //Opcode::PHP => {}
+            //Opcode::PLA => {}
+            //Opcode::PLP => {}
+            //Opcode::ROL => {}
+            //Opcode::ROR => {}
+            //Opcode::RTI => {}
+            //Opcode::RTS => {}
             Opcode::SBC => {
                 self.fetch();
                 let val: u16 = (self.fetched ^ 0x00FF) as u16;
@@ -149,19 +150,20 @@ impl CPU {
                 self.acc_reg = (tmp & 0xFF) as u8;
                 1
             }
-            Opcode::SEC => {}
-            Opcode::SED => {}
-            Opcode::SEI => {}
-            Opcode::STA => {}
-            Opcode::STX => {}
-            Opcode::STY => {}
-            Opcode::TAX => {}
-            Opcode::TAY => {}
-            Opcode::TSX => {}
-            Opcode::TXA => {}
-            Opcode::TXS => {}
-            Opcode::TYA => {}
-            Opcode::XXX => {}
+            //Opcode::SEC => {}
+            //Opcode::SED => {}
+            //Opcode::SEI => {}
+            //Opcode::STA => {}
+            //Opcode::STX => {}
+            //Opcode::STY => {}
+            //Opcode::TAX => {}
+            //Opcode::TAY => {}
+            //Opcode::TSX => {}
+            //Opcode::TXA => {}
+            //Opcode::TXS => {}
+            //Opcode::TYA => {}
+            //Opcode::XXX => {}
+            _ => 0
         }
     }
 }

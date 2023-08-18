@@ -1,3 +1,6 @@
+use crate::bus::Bus;
+use crate::cpu::CPU;
+
 /// https://youtu.be/8XmxKPJDGU0?t=1692
 
 mod cpu;
@@ -17,4 +20,13 @@ pub trait Write {
 
 fn main() {
     println!("Hello, world!");
+
+    let bus = Bus::default();
+    let mut cpu = CPU::default();
+
+    cpu.bus = Some(Box::new(bus));
+
+    let val = &cpu.fetch();
+
+    println!("{:?}", &cpu.bus.unwrap().ram);
 }

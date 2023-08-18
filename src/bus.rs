@@ -1,9 +1,7 @@
 use crate::{Read, Write};
-use crate::cpu::CPU;
 
 pub struct Bus {
-    cpu: CPU,
-    ram: [u8; 64 * 1024],
+    pub(crate) ram: [u8; 64 * 1024],
 }
 
 impl Write for Bus {
@@ -18,14 +16,10 @@ impl Read for Bus {
     }
 }
 
-impl Bus {
-    pub fn new(self) -> Self {
-        Self {
-            cpu: CPU {
-                bus: Some(Box::new(self)),
-                ..CPU::default()
-            },
-            ram: [0; 64 * 1024],
+impl Default for Bus {
+    fn default() -> Self {
+        Bus {
+            ram: [0u8; 64 * 1024]
         }
     }
 }

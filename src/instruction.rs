@@ -2,6 +2,7 @@ use crate::addressing_mode::AddressingMode;
 use crate::cpu::CPU;
 use crate::op_code::Opcode;
 
+#[derive(Clone)]
 pub struct Instruction {
     pub opcode: Opcode,
     pub addressing_mode: AddressingMode,
