@@ -25,8 +25,9 @@ fn main() {
     let mut cpu = CPU::default();
 
     cpu.bus = Some(Box::new(bus));
+    cpu.write(0, 1);
+    cpu.opcode = 2;
+    let val = cpu.fetch();
 
-    let val = &cpu.fetch();
-
-    println!("{:?}", &cpu.bus.unwrap().ram);
+    println!("{:?}, {:?}", &cpu.bus.unwrap().ram, val);
 }
