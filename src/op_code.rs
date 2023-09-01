@@ -157,7 +157,7 @@ impl CPU {
                 self.stk_ptr -= 1;
                 self.set_flag(B, false);
 
-                self.pgrm_ctr = (self.read(0xFFFE, false) | (self.read(0xFFFF, false) << 8)) as u16;
+                self.pgrm_ctr |= (self.read(0x100 + self.stk_ptr as u16, false) as u16) << 8;
                 0
             }
             Opcode::BVC => {
@@ -379,7 +379,7 @@ impl CPU {
                 self.stk_ptr += 1;
                 self.pgrm_ctr = self.read(0x100 + self.stk_ptr as u16, false) as u16;
                 self.stk_ptr += 1;
-                self.pgrm_ctr |= (self.read(0x100 + self.stk_ptr as u16, false) << 8) as u16;
+                self.pgrm_ctr |= (self.read(0x100 + self.stk_ptr as u16, false) as u16) << 8;
 
                 0
             }
@@ -388,7 +388,7 @@ impl CPU {
                 self.pgrm_ctr = self.read(0x100 + self.stk_ptr as u16, false) as u16;
 
                 self.stk_ptr += 1;
-                self.pgrm_ctr |= (self.read(0x100 + self.stk_ptr as u16, false) << 8) as u16;
+                self.pgrm_ctr |= (self.read(0x100 + self.stk_ptr as u16, false) as u16) << 8;
 
                 self.pgrm_ctr += 1;
                 0

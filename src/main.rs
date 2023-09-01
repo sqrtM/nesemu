@@ -1,3 +1,7 @@
+use std::{
+    error::Error,
+};
+
 use crate::bus::Bus;
 use crate::cpu::CPU;
 
@@ -8,6 +12,7 @@ mod bus;
 mod instruction;
 mod addressing_mode;
 mod op_code;
+mod gui;
 
 pub trait Read {
     fn read(&self, addr: u16, _read_only: bool) -> u8;
@@ -18,9 +23,7 @@ pub trait Write {
 }
 
 
-fn main() {
-    println!("Hello, world!");
-
+fn main() -> Result<(), Box<dyn Error>> {
     let bus = Bus::default();
     let mut cpu = CPU::default();
 
@@ -29,5 +32,5 @@ fn main() {
     cpu.opcode = 2;
     let val = cpu.fetch();
 
-    println!("{:?}, {:?}", &cpu.bus.unwrap().ram, val);
+    gui::render()
 }
