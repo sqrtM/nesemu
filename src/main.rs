@@ -25,6 +25,7 @@ pub trait Write {
 
 fn main() -> Result<(), Box<dyn Error>> {
     let bus = Bus::default();
+    let ram_addr = bus.get_ram_addr();
     let mut cpu = CPU::default();
 
     cpu.bus = Some(Box::new(bus));
@@ -32,5 +33,5 @@ fn main() -> Result<(), Box<dyn Error>> {
     cpu.opcode = 2;
     let val = cpu.fetch();
 
-    gui::render()
+    gui::render(ram_addr)
 }

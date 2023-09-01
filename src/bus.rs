@@ -1,3 +1,4 @@
+use std::ptr::addr_of;
 use crate::{Read, Write};
 
 pub struct Bus {
@@ -21,5 +22,11 @@ impl Default for Bus {
         Bus {
             ram: [0u8; 64 * 1024]
         }
+    }
+}
+
+impl Bus {
+    pub fn get_ram_addr(&self) -> Box<[u8; 65536]> {
+        Box::new(self.ram)
     }
 }
