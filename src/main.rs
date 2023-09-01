@@ -1,9 +1,10 @@
-use std::{
-    error::Error,
-};
+use std::{error::Error, thread};
+use std::time::Duration;
 
 use crate::bus::Bus;
 use crate::cpu::CPU;
+use crate::op_code::Opcode;
+use crate::op_code::Opcode::{BRK, XXX};
 
 /// https://youtu.be/8XmxKPJDGU0?t=1692
 
@@ -22,16 +23,24 @@ pub trait Write {
     fn write(&mut self, addr: u16, data: u8) -> ();
 }
 
-
-fn main() -> Result<(), Box<dyn Error>> {
+fn main() {
     let bus = Bus::default();
-    let ram_addr = bus.get_ram_addr();
     let mut cpu = CPU::default();
 
     cpu.bus = Some(Box::new(bus));
-    cpu.write(0, 1);
-    cpu.opcode = 2;
-    let val = cpu.fetch();
+    cpu.write(1, 16);
 
-    gui::render(ram_addr)
+    cpu.reset();
+
+    let mut code: Opcode = XXX;
+    while code != BRK {
+        let _ = cpu.clock();
+        thread::sleep(Duration::from_millis(20));
+        println!("{:?}", cpu.lookup(cpu.opcode).opcode);
+        println!("{:X?}", &cpu.bus.as_mut().expect("").ram[0..6]);
+        println!("[{:X?}, {:X?}, {:X?}, {:X?}, {:X?}, {:X?}]", &cpu.read(0, false), &cpu.read(1, false), &cpu.read(2, false), &cpu.read(3, false), &cpu.read(4, false), &cpu.read(5, false));
+        code = cpu.lookup(cpu.opcode).opcode;
+    }
+
+    //gui::render(&r).expect("TODO: panic message");
 }

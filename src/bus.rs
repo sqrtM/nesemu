@@ -1,4 +1,3 @@
-use std::ptr::addr_of;
 use crate::{Read, Write};
 
 pub struct Bus {
@@ -19,8 +18,15 @@ impl Read for Bus {
 
 impl Default for Bus {
     fn default() -> Self {
+        let mut ram =[0u8; 64 * 1024];
+        ram[0] = 0xA5;
+        ram[1] = 0x60;
+        ram[2] = 0x65;
+        ram[3] = 0x61;
+        ram[4] = 0x85;
+        ram[5] = 0x62;
         Bus {
-            ram: [0u8; 64 * 1024]
+            ram
         }
     }
 }

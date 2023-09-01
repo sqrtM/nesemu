@@ -1,6 +1,7 @@
 use crate::{Read, Write};
 use crate::addressing_mode::AddressingMode;
 use crate::bus::Bus;
+use crate::cpu::StatusFlag::U;
 
 pub struct CPU {
     pub bus: Option<Box<Bus>>,
@@ -58,12 +59,17 @@ impl Write for CPU {
 }
 
 impl CPU {
-    fn clock(&mut self) {
-        if self.cycles == 0 {
+    pub(crate) fn clock(&mut self) {
+        //if self.cycles == 0 {
             self.opcode = self.read(self.pgrm_ctr, false);
             self.pgrm_ctr += 1;
-            self.cycles = self.lookup(self.opcode).cycles
-        }
+            let instruction = self.lookup(self.opcode);
+            self.cycles = instruction.cycles;
+            self.cycles += self.operation(instruction.opcode);
+        //} else {
+        //    self.cycles -= 1;
+        //}
+        self.set_flag(U, true);
     }
 
     pub(crate) fn fetch(&mut self) -> u8 {
@@ -89,6 +95,26 @@ impl CPU {
         } else {
             self.status &= !flag.bit()
         }
+    }
+
+    pub(crate) fn reset(&mut self) {
+        self.addr_abs = 0xFFFC;
+        let low: u16 = self.read(self.addr_abs + 0, false) as u16;
+        let hi: u16 = self.read(self.addr_abs + 1, false) as u16;
+
+        self.pgrm_ctr = (hi << 8) | low;
+
+        self.acc_reg = 0;
+        self.x_reg = 0;
+        self.y_reg = 0;
+        self.stk_ptr = 0xFD;
+        self.status = 0x00 | U.bit();
+
+        self.addr_rel = 0;
+        self.addr_abs = 0;
+        self.fetched = 0;
+
+        self.cycles = 8;
     }
 }
 

@@ -3,7 +3,7 @@ use crate::addressing_mode::AddressingMode::IMP;
 use crate::cpu::CPU;
 use crate::cpu::StatusFlag::{B, C, D, I, N, U, V, Z};
 
-#[derive(Clone)]
+#[derive(Clone, Debug, PartialEq)]
 pub enum Opcode {
     ADC,
     AND,
@@ -66,14 +66,14 @@ pub enum Opcode {
 }
 
 impl CPU {
-    fn operation(&mut self, opcode: Opcode) -> u8 {
+    pub fn operation(&mut self, opcode: Opcode) -> u8 {
         match opcode {
             Opcode::ADC => {
                 self.fetch();
-                let tmp = (self.acc_reg + self.fetched + self.get_flag(C)) as u16;
+                let tmp = self.acc_reg as u16 + self.fetched as u16 + self.get_flag(C) as u16;
                 self.set_flag(C, tmp > 255);
                 self.set_flag(Z, (tmp & 0xFF) == 0);
-                let set: bool = !(self.acc_reg ^ self.fetched) as u16 & (self.acc_reg as u16 ^ tmp) & 0x80 == 1;
+                let set: bool = !(self.acc_reg as u16 ^ self.fetched as u16) & (self.acc_reg as u16 ^ tmp) & 0x80 == 1;
                 self.set_flag(V, set);
                 self.set_flag(N, tmp & 0x80 == 1);
                 self.acc_reg = (tmp & 0xFF) as u8;

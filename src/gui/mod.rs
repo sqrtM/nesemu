@@ -69,7 +69,7 @@ struct App<'a> {
 }
 
 impl<'a> App<'a> {
-    fn new(ram: Box<[u8; 65536]>) -> App<'a> {
+    fn new(ram: &[u8; 65536]) -> App<'a> {
         let mut ram_demo: Vec<(String, [u8; 32])> = vec![];
         let mut i: usize = 0;
         while i < ram.len() - 32 {
@@ -119,7 +119,7 @@ impl<'a> App<'a> {
     }
 }
 
-pub(crate) fn render(ram: Box<[u8; 65536]>) -> Result<(), Box<dyn Error>> {
+pub(crate) fn render(ram: &[u8; 65536]) -> Result<(), Box<dyn Error>> {
     // setup terminal
     enable_raw_mode()?;
     let mut stdout = io::stdout();
