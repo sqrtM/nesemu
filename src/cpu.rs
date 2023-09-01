@@ -31,7 +31,7 @@ pub enum StatusFlag {
 }
 
 impl StatusFlag {
-    fn bit(&self) -> u8 {
+    pub fn bit(&self) -> u8 {
         match self {
             StatusFlag::C => 1 << 0,
             StatusFlag::Z => 1 << 1,
