@@ -1,3 +1,4 @@
+use crate::{Write, Read};
 use crate::addressing_mode::AddressingMode;
 use crate::cpu::CPU;
 use crate::op_code::Opcode;
@@ -9,7 +10,7 @@ pub struct Instruction {
     pub cycles: u8,
 }
 
-impl CPU {
+impl<Bus: Read + Write> CPU<Bus> {
     pub fn lookup(&self, n: u8) -> Instruction {
         match n {
             0x00 => Instruction {

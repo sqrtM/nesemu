@@ -1,5 +1,5 @@
 use crate::cpu::CPU;
-use crate::Read;
+use crate::{Read, Write};
 
 #[derive(PartialEq, Clone)]
 pub enum AddressingMode {
@@ -17,7 +17,7 @@ pub enum AddressingMode {
     IZY,
 }
 
-impl CPU {
+impl<Bus: Read + Write> CPU<Bus> {
     fn address(&mut self, addressing_mode: AddressingMode) -> u8 {
         match addressing_mode {
             AddressingMode::IMP => {

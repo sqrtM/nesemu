@@ -1,9 +1,8 @@
 use crate::{Read, Write};
 use crate::addressing_mode::AddressingMode;
-use crate::bus::Bus;
 use crate::cpu::StatusFlag::U;
 
-pub struct CPU {
+pub struct CPU<Bus: Read + Write> {
     pub bus: Option<Box<Bus>>,
 
     pub acc_reg: u8,
@@ -46,20 +45,20 @@ impl StatusFlag {
     }
 }
 
-impl Read for CPU {
+impl<Bus: Read + Write> Read for CPU<Bus> {
     fn read(&self, addr: u16, _read_only: bool) -> u8 {
         self.bus.as_ref().expect("no bus connected").read(addr, _read_only)
     }
 }
 
-impl Write for CPU {
+impl<Bus: Read + Write> Write for CPU<Bus> {
     fn write(&mut self, addr: u16, data: u8) {
         self.bus.as_mut().expect("no bus connected").write(addr, data)
     }
 }
 
-impl CPU {
-    pub(crate) fn clock(&mut self) {
+impl<Bus: Read + Write> CPU<Bus> {
+    pub fn clock(&mut self) {
         //if self.cycles == 0 {
             self.opcode = self.read(self.pgrm_ctr, false);
             self.pgrm_ctr += 1;
@@ -80,7 +79,7 @@ impl CPU {
     }
 }
 
-impl CPU {
+impl<Bus: Read + Write> CPU<Bus> {
     pub(crate) fn get_flag(&self, flag: StatusFlag) -> u8 {
         if (self.status & flag.bit()) > 0 {
             1
@@ -97,7 +96,7 @@ impl CPU {
         }
     }
 
-    pub(crate) fn reset(&mut self) {
+    pub fn reset(&mut self) {
         self.addr_abs = 0xFFFC;
         let low: u16 = self.read(self.addr_abs + 0, false) as u16;
         let hi: u16 = self.read(self.addr_abs + 1, false) as u16;
@@ -118,7 +117,7 @@ impl CPU {
     }
 }
 
-impl Default for CPU {
+impl<Bus: Read + Write> Default for CPU<Bus> {
     fn default() -> Self {
         CPU {
             bus: None,

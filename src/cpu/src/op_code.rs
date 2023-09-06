@@ -65,7 +65,7 @@ pub enum Opcode {
     XXX,
 }
 
-impl CPU {
+impl<Bus: Read + Write> CPU<Bus> {
     pub fn operation(&mut self, opcode: Opcode) -> u8 {
         match opcode {
             Opcode::ADC => {
