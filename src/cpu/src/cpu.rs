@@ -1,4 +1,4 @@
-use nesemu_core::{Write, Read};
+use nesemu_core::{Read, Write};
 
 use crate::addressing_mode::AddressingMode;
 use crate::cpu::StatusFlag::U;
@@ -20,6 +20,7 @@ pub struct CPU<Bus: Read + Write> {
     pub cycles: u8,
 }
 
+#[derive(Debug)]
 pub enum StatusFlag {
     C,
     Z,
@@ -48,27 +49,34 @@ impl StatusFlag {
 
 impl<Bus: Read + Write> Read for CPU<Bus> {
     fn read(&self, addr: u16, _read_only: bool) -> u8 {
-        self.bus.as_ref().expect("no bus connected").read(addr, _read_only)
+        self.bus
+            .as_ref()
+            .expect("no bus connected")
+            .read(addr, _read_only)
     }
 }
 
 impl<Bus: Read + Write> Write for CPU<Bus> {
     fn write(&mut self, addr: u16, data: u8) {
-        self.bus.as_mut().expect("no bus connected").write(addr, data)
+        self.bus
+            .as_mut()
+            .expect("no bus connected")
+            .write(addr, data)
     }
 }
 
 impl<Bus: Read + Write> CPU<Bus> {
     pub fn clock(&mut self) {
-        //if self.cycles == 0 {
+        if self.cycles == 0 {
             self.opcode = self.read(self.pgrm_ctr, false);
             self.pgrm_ctr += 1;
             let instruction = self.lookup(self.opcode);
-            self.cycles = instruction.cycles;
-            self.cycles += self.operation(instruction.opcode);
-        //} else {
-        //    self.cycles -= 1;
-        //}
+            self.cycles = instruction.cycles
+                + self.address(instruction.addressing_mode)
+                + self.operation(instruction.opcode);
+        } else {
+            self.cycles -= 1;
+        }
         self.set_flag(U, true);
     }
 
@@ -81,8 +89,8 @@ impl<Bus: Read + Write> CPU<Bus> {
 }
 
 impl<Bus: Read + Write> CPU<Bus> {
-    pub(crate) fn get_flag(&self, flag: StatusFlag) -> u8 {
-        if (self.status & flag.bit()) > 0 {
+    pub fn get_flag(&self, flag: StatusFlag) -> u8 {
+        if (self.status & flag.bit()) != 0 {
             1
         } else {
             0
@@ -136,4 +144,3 @@ impl<Bus: Read + Write> Default for CPU<Bus> {
         }
     }
 }
-

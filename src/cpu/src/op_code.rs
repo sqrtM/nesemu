@@ -1,7 +1,7 @@
-use nesemu_core::{Write, Read};
 use crate::addressing_mode::AddressingMode::IMP;
-use crate::cpu::CPU;
 use crate::cpu::StatusFlag::{B, C, D, I, N, U, V, Z};
+use crate::cpu::CPU;
+use nesemu_core::{Read, Write};
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum Opcode {
@@ -73,7 +73,10 @@ impl<Bus: Read + Write> CPU<Bus> {
                 let tmp = self.acc_reg as u16 + self.fetched as u16 + self.get_flag(C) as u16;
                 self.set_flag(C, tmp > 255);
                 self.set_flag(Z, (tmp & 0xFF) == 0);
-                let set: bool = !(self.acc_reg as u16 ^ self.fetched as u16) & (self.acc_reg as u16 ^ tmp) & 0x80 == 1;
+                let set: bool = !(self.acc_reg as u16 ^ self.fetched as u16)
+                    & (self.acc_reg as u16 ^ tmp)
+                    & 0x80
+                    == 1;
                 self.set_flag(V, set);
                 self.set_flag(N, tmp & 0x80 == 1);
                 self.acc_reg = (tmp & 0xFF) as u8;
@@ -147,7 +150,10 @@ impl<Bus: Read + Write> CPU<Bus> {
                 self.pgrm_ctr += 1;
 
                 self.set_flag(I, true);
-                self.write(0x0100 + self.stk_ptr as u16, ((self.pgrm_ctr >> 8) & 0xFF) as u8);
+                self.write(
+                    0x0100 + self.stk_ptr as u16,
+                    ((self.pgrm_ctr >> 8) & 0xFF) as u8,
+                );
                 self.stk_ptr -= 1;
                 self.write(0x0100 + self.stk_ptr as u16, (self.pgrm_ctr & 0xFF) as u8);
                 self.stk_ptr -= 1;
@@ -265,7 +271,10 @@ impl<Bus: Read + Write> CPU<Bus> {
             }
             Opcode::JSR => {
                 self.pgrm_ctr -= 1;
-                self.write(0x100 + self.stk_ptr as u16, ((self.pgrm_ctr >> 8) & 0xFF) as u8);
+                self.write(
+                    0x100 + self.stk_ptr as u16,
+                    ((self.pgrm_ctr >> 8) & 0xFF) as u8,
+                );
                 0
             }
             Opcode::LDA => {
@@ -321,7 +330,10 @@ impl<Bus: Read + Write> CPU<Bus> {
                 0
             }
             Opcode::PHP => {
-                self.write(0x0100 + self.stk_ptr as u16, self.status | B.bit() | U.bit());
+                self.write(
+                    0x0100 + self.stk_ptr as u16,
+                    self.status | B.bit() | U.bit(),
+                );
                 self.set_flag(B, false);
                 self.set_flag(U, true);
                 self.stk_ptr -= 1;

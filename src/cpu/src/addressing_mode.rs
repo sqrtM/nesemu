@@ -1,7 +1,7 @@
 use crate::cpu::CPU;
-use nesemu_core::{Write, Read};
+use nesemu_core::{Read, Write};
 
-#[derive(PartialEq, Clone)]
+#[derive(PartialEq, Clone, Debug)]
 pub enum AddressingMode {
     IMP,
     IMM,
@@ -18,7 +18,7 @@ pub enum AddressingMode {
 }
 
 impl<Bus: Read + Write> CPU<Bus> {
-    fn address(&mut self, addressing_mode: AddressingMode) -> u8 {
+    pub fn address(&mut self, addressing_mode: AddressingMode) -> u8 {
         match addressing_mode {
             AddressingMode::IMP => {
                 self.fetched = self.acc_reg;
@@ -107,9 +107,11 @@ impl<Bus: Read + Write> CPU<Bus> {
 
                 //emulating the page boundary bug ...
                 if ptr_low == 0xFF {
-                    self.addr_abs = ((self.read(ptr & 0xFF00, false).wrapping_shl(8)) | self.read(ptr, false)) as u16
+                    self.addr_abs = ((self.read(ptr & 0xFF00, false).wrapping_shl(8))
+                        | self.read(ptr, false)) as u16
                 } else {
-                    self.addr_abs = ((self.read(ptr, false).wrapping_shl(8)) | self.read(ptr, false)) as u16
+                    self.addr_abs =
+                        ((self.read(ptr, false).wrapping_shl(8)) | self.read(ptr, false)) as u16
                 }
                 0
             }

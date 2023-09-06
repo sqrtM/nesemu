@@ -1,12 +1,11 @@
 mod bus;
 
-use std::thread;
-use std::time::Duration;
-
 use bus::Bus;
-use nesemu_core::{Write, Read};
-use nesemu_cpu::cpu::CPU;
-use nesemu_cpu::op_code::Opcode;
+use nesemu_core::Write;
+use nesemu_cpu::cpu::{
+    StatusFlag::{C, D, I, N, V, Z},
+    CPU,
+};
 
 /// https://youtu.be/8XmxKPJDGU0?t=1692
 
@@ -19,13 +18,30 @@ fn main() {
 
     cpu.reset();
 
-    let mut code: Opcode = Opcode::XXX;
-    while code != Opcode::BRK {
+    let mut i = 0;
+    while i < 128 {
         let _ = cpu.clock();
-        thread::sleep(Duration::from_millis(20));
-        println!("{:?}", cpu.lookup(cpu.opcode).opcode);
-        println!("{:X?}", &cpu.bus.as_mut().expect("").ram[0..6]);
-        println!("[{:X?}, {:X?}, {:X?}, {:X?}, {:X?}, {:X?}]", &cpu.read(0, false), &cpu.read(1, false), &cpu.read(2, false), &cpu.read(3, false), &cpu.read(4, false), &cpu.read(5, false));
-        code = cpu.lookup(cpu.opcode).opcode;
+        // if cpu.cycles == 0 {
+        println!(
+            "[ {:?}, {:?}, {:b} ]",
+            cpu.lookup(cpu.opcode).opcode,
+            cpu.lookup(cpu.opcode).addressing_mode,
+            cpu.status
+        );
+        println!(
+            "[ {:X} :: {}, {}, {}, {}, {}]",
+            cpu.pgrm_ctr, cpu.acc_reg, cpu.x_reg, cpu.y_reg, cpu.status, cpu.stk_ptr
+        );
+        println!(
+            "[ N:{} V:{} D:{} I:{} Z:{} C:{}]",
+            cpu.get_flag(N),
+            cpu.get_flag(V),
+            cpu.get_flag(D),
+            cpu.get_flag(I),
+            cpu.get_flag(Z), // error here ?
+            cpu.get_flag(C),
+        );
+        i += 1;
+        // }
     }
 }

@@ -1,9 +1,9 @@
-use nesemu_core::{Write, Read};
 use crate::addressing_mode::AddressingMode;
 use crate::cpu::CPU;
 use crate::op_code::Opcode;
+use nesemu_core::{Read, Write};
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct Instruction {
     pub opcode: Opcode,
     pub addressing_mode: AddressingMode,
