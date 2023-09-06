@@ -1,4 +1,4 @@
-use nesemu_cpu::{Read, Write};
+use nesemu_core::{Write, Read};
 
 pub struct Bus {
     pub(crate) ram: [u8; 64 * 1024],

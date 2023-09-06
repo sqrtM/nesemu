@@ -1,5 +1,5 @@
 use crate::cpu::CPU;
-use crate::{Read, Write};
+use nesemu_core::{Write, Read};
 
 #[derive(PartialEq, Clone)]
 pub enum AddressingMode {

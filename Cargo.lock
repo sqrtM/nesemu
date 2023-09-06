@@ -128,13 +128,21 @@ dependencies = [
 name = "nesemu"
 version = "0.1.0"
 dependencies = [
+ "nesemu-core",
  "nesemu-cpu",
  "nesemu-gui",
 ]
 
 [[package]]
+name = "nesemu-core"
+version = "0.1.0"
+
+[[package]]
 name = "nesemu-cpu"
 version = "0.1.0"
+dependencies = [
+ "nesemu-core",
+]
 
 [[package]]
 name = "nesemu-gui"

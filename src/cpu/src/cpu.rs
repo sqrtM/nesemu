@@ -1,4 +1,5 @@
-use crate::{Read, Write};
+use nesemu_core::{Write, Read};
+
 use crate::addressing_mode::AddressingMode;
 use crate::cpu::StatusFlag::U;
 

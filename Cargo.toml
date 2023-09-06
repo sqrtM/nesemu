@@ -1,2 +1,2 @@
 [workspace]
-members = ["src/cpu", "src/nes", "src/gui"]
+members = ["src/cpu", "src/nes", "src/gui", "src/core"]

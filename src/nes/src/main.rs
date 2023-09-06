@@ -4,7 +4,7 @@ use std::thread;
 use std::time::Duration;
 
 use bus::Bus;
-use nesemu_cpu::{Write, Read};
+use nesemu_core::{Write, Read};
 use nesemu_cpu::cpu::CPU;
 use nesemu_cpu::op_code::Opcode;
 
