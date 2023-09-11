@@ -3,6 +3,12 @@
   <component name="NewModuleRootManager">
     <content url="file://$MODULE_DIR$">
       <sourceFolder url="file://$MODULE_DIR$/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/src/core/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/src/cpu/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/src/gui/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/src/nes/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/src/cpu/tests" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/src/nes/tests" isTestSource="true" />
       <excludeFolder url="file://$MODULE_DIR$/target" />
     </content>
     <orderEntry type="inheritedJdk" />
