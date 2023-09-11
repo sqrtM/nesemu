@@ -20,7 +20,8 @@ impl Read for Bus {
 
 impl Default for Bus {
     fn default() -> Self {
-        let ram = [0u8; 0xFFFF];
+        let mut ram = [0u8; 0xFFFF];
+
         Bus { ram }
     }
 }
