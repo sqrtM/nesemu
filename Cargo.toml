@@ -2,7 +2,7 @@
 members = ["src/cpu", "src/nes", "src/gui", "src/core"]
 
 [[bin]]
-name = "nes"
+name = "headless_nes" # if you just want I/O without the GUI
 path = "/src/nes/src/main.rs"
 
 [package]
