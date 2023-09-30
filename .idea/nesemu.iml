@@ -9,6 +9,7 @@
       <sourceFolder url="file://$MODULE_DIR$/src/nes/src" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/src/cpu/tests" isTestSource="true" />
       <sourceFolder url="file://$MODULE_DIR$/src/nes/tests" isTestSource="true" />
+      <excludeFolder url="file://$MODULE_DIR$/src/gui/target" />
       <excludeFolder url="file://$MODULE_DIR$/target" />
     </content>
     <orderEntry type="inheritedJdk" />

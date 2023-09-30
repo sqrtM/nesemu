@@ -3,7 +3,7 @@ use std::fs;
 use nesemu_core::{Read, Write};
 
 pub struct Bus {
-    pub(crate) ram: [u8; 0xFFFF],
+    pub ram: [u8; 0xFFFF],
 }
 
 impl Write for Bus {
@@ -20,14 +20,17 @@ impl Read for Bus {
 
 impl Default for Bus {
     fn default() -> Self {
-        let mut ram = [0u8; 0xFFFF];
+        let mut ram = [0; 65535];
+        ram[1] = 44;
+        ram[2] = 38;
+        ram[3] = 43;
 
         Bus { ram }
     }
 }
 
 impl Bus {
-    pub(crate) fn load(&mut self) {
+    pub fn load(&mut self) {
         let contents: Vec<u8> = fs::read("src/nes/tests/roms/nestest.nes")
             .expect("Should have been able to read the file");
         for (i, j) in contents.iter().enumerate() {

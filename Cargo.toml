@@ -1,2 +1,21 @@
 [workspace]
 members = ["src/cpu", "src/nes", "src/gui", "src/core"]
+
+[[bin]]
+name = "nes"
+path = "/src/nes/src/main.rs"
+
+[package]
+name = "nesemu_package"
+version = "0.1.0"
+authors = ["Mason Pike <masonapike@gmail.com>"]
+edition = "2021"
+rust-version = "1.71"
+
+[profile.release]
+opt-level = 2 # fast and small wasm
+
+# Optimize all dependencies even in debug builds:
+[profile.dev.package."*"]
+opt-level = 2
+

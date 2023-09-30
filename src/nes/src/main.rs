@@ -11,8 +11,8 @@ fn main() {
     cpu.bus = Some(Box::new(bus));
     cpu.reset();
 
-    loop {
-        cpu.clock();
-        println!("{:?} ", cpu.lookup(cpu.opcode));
-    }
+    //loop {
+    //    cpu.clock();
+    //    println!("{:?} ", cpu.lookup(cpu.opcode));
+    //}
 }

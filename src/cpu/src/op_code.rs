@@ -76,9 +76,9 @@ impl<Bus: Read + Write> CPU<Bus> {
                 let set: bool = !(self.acc_reg as u16 ^ self.fetched as u16)
                     & (self.acc_reg as u16 ^ tmp)
                     & 0x80
-                    == 1;
+                    != 0;
                 self.set_flag(V, set);
-                self.set_flag(N, tmp & 0x80 == 1);
+                self.set_flag(N, tmp & 0x80 != 0);
                 self.acc_reg = (tmp & 0xFF) as u8;
                 1
             }
@@ -86,7 +86,7 @@ impl<Bus: Read + Write> CPU<Bus> {
                 self.fetch();
                 self.acc_reg = self.acc_reg & self.fetched;
                 self.set_flag(Z, self.acc_reg == 0);
-                self.set_flag(N, self.acc_reg & 0x80 == 1);
+                self.set_flag(N, self.acc_reg & 0x80 != 0);
                 1
             }
             Opcode::ASL => {
@@ -94,7 +94,7 @@ impl<Bus: Read + Write> CPU<Bus> {
                 let tmp: u16 = (self.fetched << 1) as u16;
                 self.set_flag(C, (tmp & 0xFF00) > 0);
                 self.set_flag(Z, (tmp & 0x00FF) == 0);
-                self.set_flag(N, tmp & 0x80 == 1);
+                self.set_flag(N, tmp & 0x80 != 0);
                 if self.lookup(self.opcode).addressing_mode == IMP {
                     self.acc_reg = (tmp & 0xFF) as u8;
                 } else {
@@ -109,13 +109,13 @@ impl<Bus: Read + Write> CPU<Bus> {
                 0
             }
             Opcode::BCS => {
-                if self.get_flag(C) == 1 {
+                if self.get_flag(C) != 0 {
                     self.branch()
                 }
                 0
             }
             Opcode::BEQ => {
-                if self.get_flag(Z) == 1 {
+                if self.get_flag(Z) != 0 {
                     self.branch()
                 }
                 0
@@ -124,12 +124,12 @@ impl<Bus: Read + Write> CPU<Bus> {
                 self.fetch();
                 let temp = self.acc_reg & self.fetched;
                 self.set_flag(Z, (temp & 0xFF) == 0);
-                self.set_flag(N, self.fetched & (1 << 7) == 1);
-                self.set_flag(V, self.fetched & (1 << 7) == 1);
+                self.set_flag(N, self.fetched & (1 << 7) != 0);
+                self.set_flag(V, self.fetched & (1 << 7) != 0);
                 0
             }
             Opcode::BMI => {
-                if self.get_flag(N) == 1 {
+                if self.get_flag(N) != 0 {
                     self.branch()
                 }
                 0
@@ -173,7 +173,7 @@ impl<Bus: Read + Write> CPU<Bus> {
                 0
             }
             Opcode::BVS => {
-                if self.get_flag(V) == 1 {
+                if self.get_flag(V) != 0 {
                     self.branch()
                 }
                 0
@@ -199,7 +199,7 @@ impl<Bus: Read + Write> CPU<Bus> {
                 let temp: u16 = (self.acc_reg - self.fetched) as u16;
                 self.set_flag(C, self.acc_reg >= self.fetched);
                 self.set_flag(Z, (temp & 0xFF) == 0);
-                self.set_flag(N, temp & 0x80 == 1);
+                self.set_flag(N, temp & 0x80 != 0);
                 1
             }
             Opcode::CPX => {
@@ -207,7 +207,7 @@ impl<Bus: Read + Write> CPU<Bus> {
                 let temp: u16 = (self.x_reg - self.fetched) as u16;
                 self.set_flag(C, self.acc_reg >= self.fetched);
                 self.set_flag(Z, (temp & 0xFF) == 0);
-                self.set_flag(N, temp & 0x80 == 1);
+                self.set_flag(N, temp & 0x80 != 0);
                 0
             }
             Opcode::CPY => {
@@ -215,7 +215,7 @@ impl<Bus: Read + Write> CPU<Bus> {
                 let temp: u16 = (self.y_reg - self.fetched) as u16;
                 self.set_flag(C, self.acc_reg >= self.fetched);
                 self.set_flag(Z, (temp & 0xFF) == 0);
-                self.set_flag(N, temp & 0x80 == 1);
+                self.set_flag(N, temp & 0x80 != 0);
                 0
             }
             Opcode::DEC => {
@@ -223,26 +223,26 @@ impl<Bus: Read + Write> CPU<Bus> {
                 let temp = self.fetched - 1;
                 self.write(self.addr_abs, temp & 0xFF);
                 self.set_flag(Z, (temp & 0xFF) == 0);
-                self.set_flag(N, temp & 0x80 == 1);
+                self.set_flag(N, temp & 0x80 != 0);
                 0
             }
             Opcode::DEX => {
                 self.x_reg -= 1;
                 self.set_flag(Z, self.x_reg == 0);
-                self.set_flag(N, self.x_reg & 0x80 == 1);
+                self.set_flag(N, self.x_reg & 0x80 != 0);
                 0
             }
             Opcode::DEY => {
                 self.y_reg -= 1;
                 self.set_flag(Z, self.y_reg == 0);
-                self.set_flag(N, self.y_reg & 0x80 == 1);
+                self.set_flag(N, self.y_reg & 0x80 != 0);
                 0
             }
             Opcode::EOR => {
                 self.fetch();
                 self.acc_reg = self.acc_reg ^ self.fetched;
                 self.set_flag(Z, self.acc_reg == 0);
-                self.set_flag(N, self.acc_reg & 0x80 == 1);
+                self.set_flag(N, self.acc_reg & 0x80 != 0);
                 1
             }
             Opcode::INC => {
@@ -250,19 +250,19 @@ impl<Bus: Read + Write> CPU<Bus> {
                 let temp = self.fetched + 1;
                 self.write(self.addr_abs, temp & 0xFF);
                 self.set_flag(Z, (temp & 0xFF) == 0);
-                self.set_flag(N, temp & 0x80 == 1);
+                self.set_flag(N, temp & 0x80 != 0);
                 0
             }
             Opcode::INX => {
                 self.x_reg += 1;
                 self.set_flag(Z, self.x_reg == 0);
-                self.set_flag(N, self.x_reg & 0x80 == 1);
+                self.set_flag(N, self.x_reg & 0x80 != 0);
                 0
             }
             Opcode::INY => {
                 self.y_reg += 1;
                 self.set_flag(Z, self.y_reg == 0);
-                self.set_flag(N, self.y_reg & 0x80 == 1);
+                self.set_flag(N, self.y_reg & 0x80 != 0);
                 0
             }
             Opcode::JMP => {
@@ -281,30 +281,30 @@ impl<Bus: Read + Write> CPU<Bus> {
                 self.fetch();
                 self.acc_reg = self.fetched;
                 self.set_flag(Z, self.acc_reg == 0);
-                self.set_flag(N, self.acc_reg & 0x80 == 1);
+                self.set_flag(N, self.acc_reg & 0x80 != 0);
                 1
             }
             Opcode::LDX => {
                 self.fetch();
                 self.x_reg = self.fetched;
                 self.set_flag(Z, self.x_reg == 0);
-                self.set_flag(N, self.x_reg & 0x80 == 1);
+                self.set_flag(N, self.x_reg & 0x80 != 0);
                 1
             }
             Opcode::LDY => {
                 self.fetch();
                 self.y_reg = self.fetched;
                 self.set_flag(Z, self.y_reg == 0);
-                self.set_flag(N, self.y_reg & 0x80 == 1);
+                self.set_flag(N, self.y_reg & 0x80 != 0);
                 1
             }
             Opcode::LSR => {
                 self.fetch();
-                self.set_flag(C, self.fetched & 1 == 1);
+                self.set_flag(C, self.fetched & 1 != 0);
 
                 let temp = self.fetched >> 1;
                 self.set_flag(Z, (temp & 0xFF) == 0);
-                self.set_flag(N, temp & 0x80 == 1);
+                self.set_flag(N, temp & 0x80 != 0);
                 if self.lookup(self.opcode).addressing_mode == IMP {
                     self.acc_reg = temp & 0xFF;
                 } else {
@@ -321,7 +321,7 @@ impl<Bus: Read + Write> CPU<Bus> {
                 self.fetch();
                 self.acc_reg |= self.fetched;
                 self.set_flag(Z, self.acc_reg == 0);
-                self.set_flag(N, self.acc_reg & 0x80 == 1);
+                self.set_flag(N, self.acc_reg & 0x80 != 0);
                 1
             }
             Opcode::PHA => {
@@ -343,7 +343,7 @@ impl<Bus: Read + Write> CPU<Bus> {
                 self.stk_ptr += 1;
                 self.acc_reg = self.read(0x100 + self.stk_ptr as u16, false);
                 self.set_flag(Z, self.acc_reg == 0);
-                self.set_flag(N, self.acc_reg & 0x80 == 1);
+                self.set_flag(N, self.acc_reg & 0x80 != 0);
                 0
             }
             Opcode::PLP => {
@@ -356,9 +356,9 @@ impl<Bus: Read + Write> CPU<Bus> {
                 self.fetch();
                 let temp: u16 = (self.fetched << 1 | self.get_flag(C)) as u16;
 
-                self.set_flag(C, temp & 0xFF00 == 1);
+                self.set_flag(C, temp & 0xFF00 != 0);
                 self.set_flag(Z, (temp & 0xFF) == 0);
-                self.set_flag(N, temp & 0x80 == 1);
+                self.set_flag(N, temp & 0x80 != 0);
 
                 if self.lookup(self.opcode).addressing_mode == IMP {
                     self.acc_reg = (temp & 0xFF) as u8;
@@ -371,9 +371,9 @@ impl<Bus: Read + Write> CPU<Bus> {
                 self.fetch();
                 let temp: u16 = (self.get_flag(C) << 7 | self.fetched >> 1) as u16;
 
-                self.set_flag(C, self.fetched & 1 == 1);
+                self.set_flag(C, self.fetched & 1 != 0);
                 self.set_flag(Z, (temp & 0xFF) == 0);
-                self.set_flag(N, temp & 0x80 == 1);
+                self.set_flag(N, temp & 0x80 != 0);
 
                 if self.lookup(self.opcode).addressing_mode == IMP {
                     self.acc_reg = (temp & 0xFF) as u8;
@@ -412,9 +412,9 @@ impl<Bus: Read + Write> CPU<Bus> {
                 self.set_flag(C, tmp > 255);
                 self.set_flag(Z, (tmp & 0xFF) == 0);
 
-                let set: bool = !(tmp ^ self.acc_reg as u16) & (tmp ^ val) & 0x80 == 1;
+                let set: bool = !(tmp ^ self.acc_reg as u16) & (tmp ^ val) & 0x80 != 0;
                 self.set_flag(V, set);
-                self.set_flag(N, tmp & 0x80 == 1);
+                self.set_flag(N, tmp & 0x80 != 0);
 
                 self.acc_reg = (tmp & 0xFF) as u8;
                 1
@@ -446,25 +446,25 @@ impl<Bus: Read + Write> CPU<Bus> {
             Opcode::TAX => {
                 self.x_reg = self.acc_reg;
                 self.set_flag(Z, self.x_reg == 0);
-                self.set_flag(N, self.x_reg & 0x80 == 1);
+                self.set_flag(N, self.x_reg & 0x80 != 0);
                 0
             }
             Opcode::TAY => {
                 self.y_reg = self.acc_reg;
                 self.set_flag(Z, self.y_reg == 0);
-                self.set_flag(N, self.y_reg & 0x80 == 1);
+                self.set_flag(N, self.y_reg & 0x80 != 0);
                 0
             }
             Opcode::TSX => {
                 self.x_reg = self.stk_ptr;
                 self.set_flag(Z, self.x_reg == 0);
-                self.set_flag(N, self.x_reg & 0x80 == 1);
+                self.set_flag(N, self.x_reg & 0x80 != 0);
                 0
             }
             Opcode::TXA => {
                 self.acc_reg = self.x_reg;
                 self.set_flag(Z, self.acc_reg == 0);
-                self.set_flag(N, self.acc_reg & 0x80 == 1);
+                self.set_flag(N, self.acc_reg & 0x80 != 0);
                 0
             }
             Opcode::TXS => {
@@ -474,7 +474,7 @@ impl<Bus: Read + Write> CPU<Bus> {
             Opcode::TYA => {
                 self.acc_reg = self.y_reg;
                 self.set_flag(Z, self.acc_reg == 0);
-                self.set_flag(N, self.acc_reg & 0x80 == 1);
+                self.set_flag(N, self.acc_reg & 0x80 != 0);
                 0
             }
             Opcode::XXX => {
