@@ -6,3 +6,5 @@ edition = "2021"
 [dependencies]
 nesemu-cpu = { path = "../cpu" , package="nesemu_cpu" }
 nesemu-core = { path = "../core" , package="nesemu_core" }
+serde = { version = "1.0.188", features = ["serde_derive"] }
+serde_bytes = "0.11.12"

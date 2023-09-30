@@ -4,7 +4,7 @@ use crate::addressing_mode::AddressingMode;
 use crate::cpu::StatusFlag::U;
 
 pub struct CPU<Bus: Read + Write> {
-    pub bus: Option<Box<Bus>>,
+    bus: Option<Box<Bus>>,
 
     pub acc_reg: u8,
     pub x_reg: u8,
@@ -142,5 +142,11 @@ impl<Bus: Read + Write> Default for CPU<Bus> {
             opcode: 0,
             cycles: 0,
         }
+    }
+}
+
+impl<Bus: Read + Write> CPU<Bus> {
+    pub fn connect_bus(&mut self, bus: Box<Bus>) {
+        self.bus = Some(bus);
     }
 }

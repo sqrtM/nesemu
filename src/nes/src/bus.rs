@@ -1,40 +1,50 @@
-use std::fs;
+use std::cell::RefCell;
+use std::rc::Rc;
 
 use nesemu_core::{Read, Write};
 
-pub struct Bus {
-    pub ram: [u8; 0xFFFF],
+pub struct Bus<Memory>
+where
+    Memory: Read + Write,
+{
+    pub ram: Option<Rc<RefCell<Memory>>>,
 }
 
-impl Write for Bus {
+impl<Memory> Write for Bus<Memory>
+where
+    Memory: Read + Write,
+{
     fn write(&mut self, addr: u16, data: u8) {
-        self.ram[addr as usize] = data;
+        self.ram
+            .as_ref()
+            .expect("RAM not found!")
+            .borrow_mut()
+            .write(addr, data)
     }
 }
 
-impl Read for Bus {
+impl<Memory> Read for Bus<Memory>
+where
+    Memory: Read + Write,
+{
     fn read(&self, addr: u16, _read_only: bool) -> u8 {
-        self.ram[addr as usize]
+        self.ram
+            .as_ref()
+            .expect("RAM not found!")
+            .borrow()
+            .read(addr, false)
     }
 }
 
-impl Default for Bus {
-    fn default() -> Self {
-        let mut ram = [0; 65535];
-        ram[1] = 44;
-        ram[2] = 38;
-        ram[3] = 43;
-
-        Bus { ram }
+impl<Memory> Bus<Memory>
+where
+    Memory: Read + Write,
+{
+    pub fn new() -> Self {
+        Bus { ram: None }
     }
-}
 
-impl Bus {
-    pub fn load(&mut self) {
-        let contents: Vec<u8> = fs::read("src/nes/tests/roms/nestest.nes")
-            .expect("Should have been able to read the file");
-        for (i, j) in contents.iter().enumerate() {
-            self.ram[i] = j.clone();
-        }
+    pub fn connect_ram(&mut self, ram: Rc<RefCell<Memory>>) {
+        self.ram = Some(ram.clone());
     }
 }

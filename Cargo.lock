@@ -1470,6 +1470,8 @@ version = "0.1.0"
 dependencies = [
  "nesemu_core",
  "nesemu_cpu",
+ "serde",
+ "serde_bytes",
 ]
 
 [[package]]

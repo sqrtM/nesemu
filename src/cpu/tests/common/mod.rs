@@ -7,6 +7,6 @@ pub fn setup(val: u8) -> CPU<FakeBus> {
     let mut bus = FakeBus::default();
     bus.ram[0] = val;
     let mut cpu: CPU<FakeBus> = CPU::default();
-    cpu.bus = Some(Box::new(bus));
+    cpu.connect_bus(Box::new(bus));
     return cpu;
 }

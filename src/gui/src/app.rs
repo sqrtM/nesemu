@@ -1,54 +1,29 @@
 use eframe::glow::MAX_HEIGHT;
 use egui::{CentralPanel, Grid, ScrollArea};
-use nesemu::bus::Bus;
-use nesemu_cpu::cpu::CPU;
 use serde::{Deserializer, Serializer};
+use std::cell::RefCell;
+use std::rc::Rc;
+
+use nesemu::bus::Bus;
+use nesemu::memory::CpuMemory;
+use nesemu_cpu::cpu::CPU;
 
 /// We derive Deserialize/Serialize so we can persist app state on shutdown.
 #[derive(serde::Deserialize, serde::Serialize)]
 pub struct NesemuGui {
-    #[serde(
-        serialize_with = "serialize_array",
-        deserialize_with = "deserialize_array"
-    )]
-    ram: Box<[u8; 65535]>,
-}
-
-fn serialize_array<S>(data: &Box<[u8; 65535]>, serializer: S) -> Result<S::Ok, S::Error>
-where
-    S: Serializer,
-{
-    serializer.serialize_bytes(&data[..])
-}
-
-fn deserialize_array<'de, D>(deserializer: D) -> Result<Box<[u8; 65535]>, D::Error>
-where
-    D: Deserializer<'de>,
-{
-    let data: Vec<u8> = serde_bytes::deserialize(deserializer)?;
-
-    // Ensure the deserialized data has the correct length
-    if data.len() != 65535 {
-        return Err(serde::de::Error::custom(
-            "Expected an array of length 65535",
-        ));
-    }
-
-    let mut array = [0u8; 65535];
-    array.copy_from_slice(&data);
-    Ok(Box::new(array))
+    ram: Rc<RefCell<CpuMemory>>,
 }
 
 impl Default for NesemuGui {
     fn default() -> Self {
-        let bus = Bus::default();
-        let mut cpu: CPU<_> = CPU::default();
+        let ram = Rc::new(RefCell::new(CpuMemory::new()));
+        let mut bus: Bus<CpuMemory> = Bus::new();
+        let mut cpu: CPU<Bus<CpuMemory>> = CPU::default();
 
-        cpu.bus = Some(Box::new(bus));
-        cpu.reset();
+        bus.connect_ram(ram.clone());
+        cpu.connect_bus(Box::new(bus));
 
-        let ram = Box::new(cpu.bus.as_ref().expect("what????").ram.clone());
-        Self { ram }
+        Self { ram: ram.clone() }
     }
 }
 
@@ -102,7 +77,7 @@ impl eframe::App for NesemuGui {
                 .show(ui, |ui| {
                     // Display the RAM array as a hex grid.
                     Grid::new("ram_grid").striped(true).show(ui, |ui| {
-                        for (i, &byte) in self.ram.iter().enumerate() {
+                        for (i, &byte) in self.ram.borrow_mut().main_ram().iter().enumerate() {
                             if i % 8 == 0 {
                                 // Display the index of the first address of the line.
                                 ui.monospace(format!("{:04X}:", i));
