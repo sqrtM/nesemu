@@ -81,8 +81,15 @@ impl Write for CpuMemory {
 
 impl CpuMemory {
     pub fn new() -> Self {
+        let mut mr: [u8; 0x0800] = [0; 0x0800];
+        mr[0] = 44;
+        mr[1] = 33;
+        mr[2] = 44;
+        mr[3] = 66;
+        mr[4] = 100;
+        mr[5] = 64;
         Self {
-            main_ram: [0; 0x0800],
+            main_ram: mr,
             main_ram_mirror: [0; 0x1800],
             ppu_registers: [0; 0x0008],
             ppu_mirrors: [0; 0x1FF8],
