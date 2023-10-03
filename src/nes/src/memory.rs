@@ -22,6 +22,41 @@ pub struct CpuMemory {
 
 impl Default for CpuMemory {
     fn default() -> Self {
+        let mut ram = [0; 0xBFE0];
+        ram[0xBFE0 - 0x8000] = 0xA2;
+        ram[1 + (0xBFE0 - 0x8000)] = 0x0A;
+        ram[2 + (0xBFE0 - 0x8000)] = 0x8E;
+        ram[3 + (0xBFE0 - 0x8000)] = 0x00;
+        ram[4 + (0xBFE0 - 0x8000)] = 0x00;
+        ram[5 + (0xBFE0 - 0x8000)] = 0xA2;
+        ram[6 + (0xBFE0 - 0x8000)] = 0x03;
+        ram[7 + (0xBFE0 - 0x8000)] = 0x8E;
+
+        ram[8 + (0xBFE0 - 0x8000)] = 0x01;
+        ram[9 + (0xBFE0 - 0x8000)] = 0x00;
+        ram[10 + (0xBFE0 - 0x8000)] = 0xAC;
+        ram[11 + (0xBFE0 - 0x8000)] = 0x00;
+        ram[12 + (0xBFE0 - 0x8000)] = 0x00;
+        ram[13 + (0xBFE0 - 0x8000)] = 0xA9;
+        ram[14 + (0xBFE0 - 0x8000)] = 0x00;
+        ram[15 + (0xBFE0 - 0x8000)] = 0x18;
+
+        ram[16 + (0xBFE0 - 0x8000)] = 0x6D;
+        ram[17 + (0xBFE0 - 0x8000)] = 0x01;
+        ram[18 + (0xBFE0 - 0x8000)] = 0x00;
+        ram[19 + (0xBFE0 - 0x8000)] = 0x88;
+        ram[20 + (0xBFE0 - 0x8000)] = 0xD0;
+        ram[21 + (0xBFE0 - 0x8000)] = 0xFA;
+        ram[22 + (0xBFE0 - 0x8000)] = 0x8D;
+        ram[23 + (0xBFE0 - 0x8000)] = 0x02;
+
+        ram[24 + (0xBFE0 - 0x8000)] = 0x00;
+        ram[25 + (0xBFE0 - 0x8000)] = 0xEA;
+        ram[26 + (0xBFE0 - 0x8000)] = 0xEA;
+        ram[27 + (0xBFE0 - 0x8000)] = 0xEA;
+
+        ram[0xFFFC - 0xBFE0] = 0x00;
+        ram[0xFFFD - 0xBFE0] = 0x80;
         CpuMemory {
             main_ram: [0; 0x0800],
             main_ram_mirror: [0; 0x1800],
@@ -29,7 +64,7 @@ impl Default for CpuMemory {
             ppu_mirrors: [0; 0x1FF8],
             apu_io_registers: [0; 0x0018],
             apu_io_expansion: [0; 0x0008],
-            cartridge_space: [0; 0xBFE0],
+            cartridge_space: ram,
         }
     }
 }
@@ -38,15 +73,15 @@ mod array_serde {
     use serde::{Deserialize, Deserializer, Serialize, Serializer};
 
     pub fn serialize<S>(array: &[u8], serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
+        where
+            S: Serializer,
     {
         array.serialize(serializer)
     }
 
     pub fn deserialize<'de, D, const N: usize>(deserializer: D) -> Result<[u8; N], D::Error>
-    where
-        D: Deserializer<'de>,
+        where
+            D: Deserializer<'de>,
     {
         let vec: Vec<u8> = Vec::deserialize(deserializer)?;
         if vec.len() == N {

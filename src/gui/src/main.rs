@@ -157,7 +157,7 @@ fn spawn_emulator_thread(
             thread::sleep(Duration::from_millis(1000));
             println!("clocking");
             emulator.cpu.clock();
-            let emulator_state = emulator.generate_state();
+            let emulator_state: EmulatorState = emulator.generate_state();
             emulator_tx
                 .send(EmulatorMessage::UpdateState(emulator_state))
                 .unwrap_or_else(|_| log::info!("sending between threads failed!!!!!!"));

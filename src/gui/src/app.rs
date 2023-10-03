@@ -38,11 +38,9 @@ impl NesemuGui {
 }
 
 impl eframe::App for NesemuGui {
-    /// Called each time the UI needs repainting, which may be many times per second.
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
-        // Put your widgets into a `SidePanel`, `TopPanel`, `CentralPanel`, `Window` or `Area`.
-        // For inspiration and more examples, go to https://emilk.github.io/egui
-        if let Ok(update) = self.receiver.recv() {
+
+        while let Ok(update) = self.receiver.try_recv() {
             match update {
                 EmulatorMessage::UpdateState(new_state) => {
                     self.state = new_state
