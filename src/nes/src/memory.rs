@@ -22,50 +22,50 @@ pub struct CpuMemory {
 
 impl Default for CpuMemory {
     fn default() -> Self {
-        let mut ram = [0; 0xBFE0];
-        ram[0xBFE0 - 0x8000] = 0xA2;
-        ram[1 + (0xBFE0 - 0x8000)] = 0x0A;
-        ram[2 + (0xBFE0 - 0x8000)] = 0x8E;
-        ram[3 + (0xBFE0 - 0x8000)] = 0x00;
-        ram[4 + (0xBFE0 - 0x8000)] = 0x00;
-        ram[5 + (0xBFE0 - 0x8000)] = 0xA2;
-        ram[6 + (0xBFE0 - 0x8000)] = 0x03;
-        ram[7 + (0xBFE0 - 0x8000)] = 0x8E;
-
-        ram[8 + (0xBFE0 - 0x8000)] = 0x01;
-        ram[9 + (0xBFE0 - 0x8000)] = 0x00;
-        ram[10 + (0xBFE0 - 0x8000)] = 0xAC;
-        ram[11 + (0xBFE0 - 0x8000)] = 0x00;
-        ram[12 + (0xBFE0 - 0x8000)] = 0x00;
-        ram[13 + (0xBFE0 - 0x8000)] = 0xA9;
-        ram[14 + (0xBFE0 - 0x8000)] = 0x00;
-        ram[15 + (0xBFE0 - 0x8000)] = 0x18;
-
-        ram[16 + (0xBFE0 - 0x8000)] = 0x6D;
-        ram[17 + (0xBFE0 - 0x8000)] = 0x01;
-        ram[18 + (0xBFE0 - 0x8000)] = 0x00;
-        ram[19 + (0xBFE0 - 0x8000)] = 0x88;
-        ram[20 + (0xBFE0 - 0x8000)] = 0xD0;
-        ram[21 + (0xBFE0 - 0x8000)] = 0xFA;
-        ram[22 + (0xBFE0 - 0x8000)] = 0x8D;
-        ram[23 + (0xBFE0 - 0x8000)] = 0x02;
-
-        ram[24 + (0xBFE0 - 0x8000)] = 0x00;
-        ram[25 + (0xBFE0 - 0x8000)] = 0xEA;
-        ram[26 + (0xBFE0 - 0x8000)] = 0xEA;
-        ram[27 + (0xBFE0 - 0x8000)] = 0xEA;
-
-        ram[0xFFFC - 0xBFE0] = 0x00;
-        ram[0xFFFD - 0xBFE0] = 0x80;
-        CpuMemory {
+        let mut c = CpuMemory {
             main_ram: [0; 0x0800],
             main_ram_mirror: [0; 0x1800],
             ppu_registers: [0; 0x0008],
             ppu_mirrors: [0; 0x1FF8],
             apu_io_registers: [0; 0x0018],
             apu_io_expansion: [0; 0x0008],
-            cartridge_space: ram,
-        }
+            cartridge_space: [0; 0xBFE0],
+        };
+        c.write(0x8000, 0xA2);
+        c.write(1 + 0x8000, 0x0A);
+        c.write(2 + 0x8000, 0x8E);
+        c.write(3 + 0x8000, 0x00);
+        c.write(4 + 0x8000, 0x00);
+        c.write(5 + 0x8000, 0xA2);
+        c.write(6 + 0x8000, 0x03);
+        c.write(7 + 0x8000, 0x8E);
+
+        c.write(8 + 0x8000, 0x01);
+        c.write(9 + 0x8000, 0x00);
+        c.write(10 + 0x8000, 0xAC);
+        c.write(11 + 0x8000, 0x00);
+        c.write(12 + 0x8000, 0x00);
+        c.write(13 + 0x8000, 0xA9);
+        c.write(14 + 0x8000, 0x00);
+        c.write(15 + 0x8000, 0x18);
+
+        c.write(16 + 0x8000, 0x6D);
+        c.write(17 + 0x8000, 0x01);
+        c.write(18 + 0x8000, 0x00);
+        c.write(19 + 0x8000, 0x88);
+        c.write(20 + 0x8000, 0xD0);
+        c.write(21 + 0x8000, 0xFA);
+        c.write(22 + 0x8000, 0x8D);
+        c.write(23 + 0x8000, 0x02);
+
+        c.write(24 + 0x8000, 0x00);
+        c.write(25 + 0x8000, 0xEA);
+        c.write(26 + 0x8000, 0xEA);
+        c.write(27 + 0x8000, 0xEA);
+
+        c.write(0xFFFC, 0x00);
+        c.write(0xFFFD, 0x80);
+        c
     }
 }
 
@@ -129,24 +129,6 @@ impl Write for CpuMemory {
 }
 
 impl CpuMemory {
-    pub fn new() -> Self {
-        let mut mr: [u8; 0x0800] = [0; 0x0800];
-        mr[0] = 44;
-        mr[1] = 33;
-        mr[2] = 44;
-        mr[3] = 66;
-        mr[4] = 100;
-        mr[5] = 64;
-        Self {
-            main_ram: mr,
-            main_ram_mirror: [0; 0x1800],
-            ppu_registers: [0; 0x0008],
-            ppu_mirrors: [0; 0x1FF8],
-            apu_io_registers: [0; 0x0018],
-            apu_io_expansion: [0; 0x0008],
-            cartridge_space: [0; 0xBFE0],
-        }
-    }
 
     pub fn main_ram(&self) -> &[u8; 2048] {
         &self.main_ram

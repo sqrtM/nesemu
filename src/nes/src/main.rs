@@ -16,14 +16,14 @@ fn main() -> () {
 
     impl Nes {
         fn connect(&mut self) {
-            self.connect_ram();
+            //self.connect_ram();
             //self.connect_bus();
             self.cpu.reset();
         }
 
-        fn connect_ram(&mut self) {
-            self.bus.connect_ram(self.ram.clone());
-        }
+        //fn connect_ram(&mut self) {
+           // self.bus.connect_ram(self.ram.clone());
+        //}
         fn connect_bus(mut self) {
             self.cpu.connect_bus(Box::new(self.bus));
         }
@@ -33,15 +33,15 @@ fn main() -> () {
         }
     }
 
-    let ram = Rc::new(RefCell::new(CpuMemory::new()));
+    //let ram = Rc::new(RefCell::new(CpuMemory::new()));
     let mut bus: Bus<CpuMemory> = Bus::new();
     let mut cpu: CPU<Bus<CpuMemory>> = CPU::default();
 
-    let mut nes = Nes { cpu, bus, ram };
+    //let mut nes = Nes { cpu, bus, ram };
 
-    nes.connect();
+    //nes.connect();
 
-    nes.get_ram();
+    //nes.get_ram();
     //loop {
     //    cpu.clock();
     //    println!("{:?} ", cpu.lookup(cpu.opcode));

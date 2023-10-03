@@ -1,6 +1,7 @@
 use std::sync::mpsc::{Receiver, Sender};
 
 use egui::{CentralPanel, Grid, ScrollArea, Ui};
+use nesemu_core::Read;
 
 use crate::{EmulatorMessage, EmulatorState, GuiMessage};
 

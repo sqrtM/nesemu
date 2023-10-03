@@ -6,7 +6,7 @@ use std::sync::mpsc::{Receiver, Sender};
 use std::thread;
 use std::time::Duration;
 
-use eframe::App;
+
 use serde::{Deserialize, Serialize};
 
 use nesemu::bus::Bus;
@@ -30,31 +30,31 @@ pub struct EmulatorState {
 
 impl EmulatorState {
     fn get_main_ram(&self) -> [u8; 2048] {
-        self.ram.lock().unwrap().main_ram().clone()
+        *self.ram.lock().unwrap().main_ram()
     }
 
     pub fn get_main_ram_mirror(&self) -> [u8; 6144] {
-        self.ram.lock().unwrap().main_ram_mirror().clone()
+        *self.ram.lock().unwrap().main_ram_mirror()
     }
 
     pub fn get_ppu_registers(&self) -> [u8; 8] {
-        self.ram.lock().unwrap().ppu_registers().clone()
+        *self.ram.lock().unwrap().ppu_registers()
     }
 
     pub fn get_ppu_mirrors(&self) -> [u8; 8184] {
-        self.ram.lock().unwrap().ppu_mirrors().clone()
+        *self.ram.lock().unwrap().ppu_mirrors()
     }
 
     pub fn get_apu_io_registers(&self) -> [u8; 24] {
-        self.ram.lock().unwrap().apu_io_registers().clone()
+        *self.ram.lock().unwrap().apu_io_registers()
     }
 
     pub fn get_apu_io_expansion(&self) -> [u8; 8] {
-        self.ram.lock().unwrap().apu_io_expansion().clone()
+        *self.ram.lock().unwrap().apu_io_expansion()
     }
 
     pub fn get_cartridge_space(&self) -> [u8; 49120] {
-        self.ram.lock().unwrap().cartridge_space().clone()
+        *self.ram.lock().unwrap().cartridge_space()
     }
 }
 
@@ -76,12 +76,14 @@ impl Nes {
 fn main() -> eframe::Result<()> {
     env_logger::init(); // Log to stderr (if you run with `RUST_LOG=debug`).
 
-    let ram = Arc::new(Mutex::new(CpuMemory::new()));
+    let ram = Arc::new(Mutex::new(CpuMemory::default()));
     let mut bus: Bus<CpuMemory> = Bus::new();
     let mut cpu: CPU<Bus<CpuMemory>> = CPU::default();
 
     bus.connect_ram(Arc::clone(&ram));
     cpu.connect_bus(Box::new(bus));
+
+    cpu.reset();
 
     let nes = Nes { ram, cpu };
 
@@ -149,7 +151,7 @@ fn create_channels() -> (
 fn spawn_emulator_thread(
     mut emulator: Nes,
     emulator_tx: Sender<EmulatorMessage>,
-    gui_tx: Receiver<GuiMessage>,
+    _gui_tx: Receiver<GuiMessage>,
 ) -> thread::JoinHandle<()> {
     thread::spawn(move || {
         loop {
