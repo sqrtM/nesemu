@@ -1483,6 +1483,7 @@ name = "nesemu_cpu"
 version = "0.1.0"
 dependencies = [
  "nesemu_core",
+ "serde",
 ]
 
 [[package]]

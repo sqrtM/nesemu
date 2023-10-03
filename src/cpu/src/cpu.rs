@@ -1,7 +1,8 @@
 use nesemu_core::{Read, Write};
+use serde::{Deserialize, Serialize};
 
 use crate::addressing_mode::AddressingMode;
-use crate::cpu::StatusFlag::U;
+use crate::cpu::StatusFlag::{B, C, D, I, N, U, V, Z};
 
 pub struct CPU<Bus: Read + Write> {
     bus: Option<Box<Bus>>,
@@ -32,17 +33,30 @@ pub enum StatusFlag {
     N, // Negative
 }
 
+#[allow(non_snake_case)]
+#[derive(Default, Deserialize, Serialize)]
+pub struct FlagData {
+    C: u8, // Carry
+    Z: u8, // Zero
+    I: u8, // Interrupt Disable
+    D: u8, // Decimal
+    B: u8, // "B" Flag
+    U: u8, // Unused (always 1)
+    V: u8, // Overflow
+    N: u8, // Negative
+}
+
 impl StatusFlag {
     pub fn bit(&self) -> u8 {
         match self {
-            StatusFlag::C => 1 << 0,
-            StatusFlag::Z => 1 << 1,
-            StatusFlag::I => 1 << 2,
-            StatusFlag::D => 1 << 3,
-            StatusFlag::B => 1 << 4,
-            StatusFlag::U => 1 << 5,
-            StatusFlag::V => 1 << 6,
-            StatusFlag::N => 1 << 7,
+            C => 1 << 0,
+            Z => 1 << 1,
+            I => 1 << 2,
+            D => 1 << 3,
+            B => 1 << 4,
+            U => 1 << 5,
+            V => 1 << 6,
+            N => 1 << 7,
         }
     }
 }
@@ -85,6 +99,19 @@ impl<Bus: Read + Write> CPU<Bus> {
             self.fetched = self.read(self.addr_abs, false);
         }
         self.fetched
+    }
+
+    pub fn get_flag_data(&self) -> FlagData {
+        FlagData {
+            C: self.get_flag(C),
+            Z: self.get_flag(Z),
+            I: self.get_flag(I),
+            D: self.get_flag(D),
+            B: self.get_flag(B),
+            U: self.get_flag(U),
+            V: self.get_flag(V),
+            N: self.get_flag(N),
+        }
     }
 }
 

@@ -20,6 +20,20 @@ pub struct CpuMemory {
     cartridge_space: [u8; 0xBFE0],
 }
 
+impl Default for CpuMemory {
+    fn default() -> Self {
+        CpuMemory {
+            main_ram: [0; 0x0800],
+            main_ram_mirror: [0; 0x1800],
+            ppu_registers: [0; 0x0008],
+            ppu_mirrors: [0; 0x1FF8],
+            apu_io_registers: [0; 0x0018],
+            apu_io_expansion: [0; 0x0008],
+            cartridge_space: [0; 0xBFE0],
+        }
+    }
+}
+
 mod array_serde {
     use serde::{Deserialize, Deserializer, Serialize, Serializer};
 

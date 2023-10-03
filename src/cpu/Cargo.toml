@@ -7,3 +7,4 @@ edition = "2021"
 
 [dependencies]
 nesemu-core = { path = "../core" , package="nesemu_core" }
+serde = { version = "1.0.188", features = ["derive"] }

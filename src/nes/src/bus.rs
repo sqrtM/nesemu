@@ -1,13 +1,15 @@
 use std::cell::RefCell;
 use std::rc::Rc;
+use std::sync::{Arc, Mutex};
 
 use nesemu_core::{Read, Write};
+use crate::memory::CpuMemory;
 
 pub struct Bus<Memory>
 where
     Memory: Read + Write,
 {
-    pub ram: Option<Rc<RefCell<Memory>>>,
+    pub ram: Option<Arc<Mutex<Memory>>>,
 }
 
 impl<Memory> Write for Bus<Memory>
@@ -18,7 +20,8 @@ where
         self.ram
             .as_ref()
             .expect("RAM not found!")
-            .borrow_mut()
+            .lock()
+            .unwrap()
             .write(addr, data)
     }
 }
@@ -31,7 +34,8 @@ where
         self.ram
             .as_ref()
             .expect("RAM not found!")
-            .borrow()
+            .lock()
+            .unwrap()
             .read(addr, false)
     }
 }
@@ -44,7 +48,7 @@ where
         Bus { ram: None }
     }
 
-    pub fn connect_ram(&mut self, ram: Rc<RefCell<Memory>>) {
+    pub fn connect_ram(&mut self, ram: Arc<Mutex<Memory>>) {
         self.ram = Some(ram.clone());
     }
 }
