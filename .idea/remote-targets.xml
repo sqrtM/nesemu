@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="RemoteTargetsManager">
+    <targets>
+      <target name="WSL - Ubuntu" type="wsl" uuid="ccdb8649-b291-4a09-9f20-b00af083cc15">
+        <config>
+          <option name="distributionMsId" value="Ubuntu" />
+          <option name="projectRootOnTarget" value="{exitCode=0, timeout=false, cancelled=false, stdout=/mnt/c/Program Files/JetBrains/RustRover 232.9921.46/jbr/bin&#10;, stderr=}/nesemu" />
+        </config>
+        <ContributedStateBase type="RsLanguageRuntime">
+          <config>
+            <option name="cargoPath" value="/home/mpike-flyamelia/.cargo/bin/cargo" />
+            <option name="cargoVersion" value="1.74.0-nightly (e6aabe8b3 2023-09-26)" />
+            <option name="rustcPath" value="/home/mpike-flyamelia/.cargo/bin/rustc" />
+            <option name="rustcVersion" value="1.74.0-nightly (8ce4540bd 2023-09-29)" />
+          </config>
+        </ContributedStateBase>
+      </target>
+    </targets>
+  </component>
+</project>

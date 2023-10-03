@@ -22,14 +22,14 @@ pub struct CPU<Bus: Read + Write> {
 
 #[derive(Debug)]
 pub enum StatusFlag {
-    C,
-    Z,
-    I,
-    D,
-    B,
-    U,
-    V,
-    N,
+    C, // Carry
+    Z, // Zero
+    I, // Interrupt Disable
+    D, // Decimal
+    B, // "B" Flag
+    U, // Unused (always 1)
+    V, // Overflow
+    N, // Negative
 }
 
 impl StatusFlag {
@@ -97,7 +97,7 @@ impl<Bus: Read + Write> CPU<Bus> {
         }
     }
 
-    pub(crate) fn set_flag(&mut self, flag: StatusFlag, set: bool) {
+    pub fn set_flag(&mut self, flag: StatusFlag, set: bool) {
         if set {
             self.status |= flag.bit()
         } else {
@@ -107,7 +107,7 @@ impl<Bus: Read + Write> CPU<Bus> {
 
     pub fn reset(&mut self) {
         self.addr_abs = 0xFFFC;
-        let low: u16 = self.read(self.addr_abs + 0, false) as u16;
+        let low: u16 = self.read(self.addr_abs, false) as u16;
         let hi: u16 = self.read(self.addr_abs + 1, false) as u16;
 
         self.pgrm_ctr = (hi << 8) | low;
@@ -116,7 +116,7 @@ impl<Bus: Read + Write> CPU<Bus> {
         self.x_reg = 0;
         self.y_reg = 0;
         self.stk_ptr = 0xFD;
-        self.status = 0x00 | U.bit();
+        self.status = U.bit();
 
         self.addr_rel = 0;
         self.addr_abs = 0;

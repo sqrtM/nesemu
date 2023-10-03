@@ -23,6 +23,15 @@ mod tests {
     }
 
     #[test]
+    fn bmi() {
+        let mut cpu = setup(0b0000_0000);
+        cpu.operation(Opcode::BMI);
+        cpu.set_flag(N, true);
+        assert_eq!(cpu.get_flag(N), 1);
+        assert_eq!(cpu.get_flag(Z), 0);
+    }
+
+    #[test]
     fn asl() {
         //let mut cpu = setup(0b1000_1101);
         //cpu.acc_reg = 0b1000_0010;
