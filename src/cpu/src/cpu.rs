@@ -3,6 +3,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::addressing_mode::AddressingMode;
 use crate::cpu::StatusFlag::{B, C, D, I, N, U, V, Z};
+use crate::instruction::Instruction;
 
 pub struct CPU<Bus: Read + Write> {
     bus: Option<Box<Bus>>,
@@ -36,14 +37,14 @@ pub enum StatusFlag {
 #[allow(non_snake_case)]
 #[derive(Default, Deserialize, Serialize)]
 pub struct FlagData {
-    C: u8, // Carry
-    Z: u8, // Zero
-    I: u8, // Interrupt Disable
-    D: u8, // Decimal
-    B: u8, // "B" Flag
-    U: u8, // Unused (always 1)
-    V: u8, // Overflow
-    N: u8, // Negative
+    pub C: u8, // Carry
+    pub Z: u8, // Zero
+    pub I: u8, // Interrupt Disable
+    pub D: u8, // Decimal
+    pub B: u8, // "B" Flag
+    pub U: u8, // Unused (always 1)
+    pub V: u8, // Overflow
+    pub N: u8, // Negative
 }
 
 impl StatusFlag {
@@ -79,6 +80,22 @@ impl<Bus: Read + Write> Write for CPU<Bus> {
     }
 }
 
+pub struct CpuDebugInfo {
+    pub acc_reg: u8,
+    pub x_reg: u8,
+    pub y_reg: u8,
+    pub stk_ptr: u8,
+    pub pgrm_ctr: u16,
+    pub status: u8,
+
+    pub fetched: u8,
+    pub addr_abs: u16,
+    pub addr_rel: u16,
+    pub opcode_index: u8,
+    pub opcode: Instruction,
+    pub cycles: u8,
+}
+
 impl<Bus: Read + Write> CPU<Bus> {
     pub fn clock(&mut self) {
         if self.cycles == 0 {
@@ -111,6 +128,23 @@ impl<Bus: Read + Write> CPU<Bus> {
             U: self.get_flag(U),
             V: self.get_flag(V),
             N: self.get_flag(N),
+        }
+    }
+
+    pub fn get_cpu_debug_info(&self) -> CpuDebugInfo {
+        CpuDebugInfo {
+            acc_reg: self.acc_reg,
+            x_reg: self.x_reg,
+            y_reg: self.y_reg,
+            stk_ptr: self.stk_ptr,
+            pgrm_ctr: self.pgrm_ctr,
+            status: self.status,
+            fetched: self.fetched,
+            addr_abs: self.addr_abs,
+            addr_rel: self.addr_rel,
+            opcode_index: self.opcode,
+            opcode: self.lookup(self.opcode),
+            cycles: self.cycles,
         }
     }
 }

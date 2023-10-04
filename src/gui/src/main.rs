@@ -6,18 +6,18 @@ use std::sync::mpsc::{Receiver, Sender};
 use std::thread;
 use std::time::Duration;
 
-
+use eframe::App;
 use serde::{Deserialize, Serialize};
 
 use nesemu::bus::Bus;
 use nesemu::memory::CpuMemory;
-use nesemu_cpu::cpu::{CPU, FlagData};
+use nesemu_cpu::cpu::{CPU, CpuDebugInfo, FlagData};
 
 use crate::app::NesemuGui;
 
 mod app;
 
-struct Nes {
+pub struct Nes {
     ram: Arc<Mutex<CpuMemory>>,
     cpu: CPU<Bus<CpuMemory>>,
 }
@@ -69,6 +69,10 @@ impl Nes {
     fn get_cpu_flags(&self) -> FlagData {
         self.cpu.get_flag_data()
     }
+
+    fn get_cpu_debug_info(&self) -> CpuDebugInfo {
+        self.cpu.get_cpu_debug_info()
+    }
 }
 
 // When compiling natively:
@@ -85,12 +89,12 @@ fn main() -> eframe::Result<()> {
 
     cpu.reset();
 
-    let nes = Nes { ram, cpu };
+    let nes_ref = Arc::new(Mutex::new(Nes { ram, cpu }));
 
     // Set up communication channels between emulator and GUI
     let (emulator_tx, emulator_rx, gui_tx, gui_rx) = create_channels();
 
-    spawn_emulator_thread(nes, emulator_tx, emulator_rx);
+    spawn_emulator_thread(nes_ref.clone(), emulator_tx, emulator_rx);
 
     let native_options = eframe::NativeOptions {
         initial_window_size: Some([400.0, 300.0].into()),
@@ -100,7 +104,25 @@ fn main() -> eframe::Result<()> {
     eframe::run_native(
         "nesemu",
         native_options,
-        Box::new(|cc| Box::new(NesemuGui::new(cc, gui_tx, gui_rx))),
+        Box::new(
+            |cc| {
+                let ctx = cc.egui_ctx.clone();
+                thread::spawn(move || {
+                    loop {
+                        if let Ok(update) = gui_rx.try_recv() {
+                            match update {
+                                EmulatorMessage::Update => {
+                                    ctx.request_repaint();
+                                }
+                                _ => {
+                                    println!("emu said stop!!!")
+                                }
+                            }
+                        }
+                    }
+                });
+                Box::new(NesemuGui::new(cc, gui_tx, nes_ref))
+            }),
     )
     //
 }
@@ -127,6 +149,7 @@ fn main() {
 
 pub enum EmulatorMessage {
     UpdateState(EmulatorState),
+    Update,
     // Example: Send emulator state updates
     Terminate,                  // Example: Terminate the emulator thread
 }
@@ -149,57 +172,65 @@ fn create_channels() -> (
 }
 
 fn spawn_emulator_thread(
-    mut emulator: Nes,
+    emulator: Arc<Mutex<Nes>>,
     emulator_tx: Sender<EmulatorMessage>,
     _gui_tx: Receiver<GuiMessage>,
 ) -> thread::JoinHandle<()> {
     thread::spawn(move || {
         loop {
-            println!("sleeping");
-            thread::sleep(Duration::from_millis(1000));
-            println!("clocking");
-            emulator.cpu.clock();
-            let emulator_state: EmulatorState = emulator.generate_state();
+            thread::sleep(Duration::from_millis(200));
+            let mut lock = emulator.lock().unwrap();
+            lock.cpu.clock();
             emulator_tx
-                .send(EmulatorMessage::UpdateState(emulator_state))
+                .send(EmulatorMessage::Update)
                 .unwrap_or_else(|_| log::info!("sending between threads failed!!!!!!"));
         }
     })
 }
-
-//fn spawn_gui_thread(
-//    gui: Arc<Mutex<NesemuGui>>,
-//    gui_rx: std::sync::mpsc::Receiver<GuiMessage>,
-//    emulator_rx: std::sync::mpsc::Receiver<EmulatorMessage>,
-//) -> thread::JoinHandle<()> {
-//    return thread::spawn(move || {
-//        std::panic::set_hook(Box::new(|panic_info| {
-//            eprintln!("Thread panicked: {:?}", panic_info);
-//        }));
-//        // GUI initialization code, if needed
-//
-//        // GUI event loop
-//        loop {
-//            // Handle messages from the emulator thread
-//            match emulator_rx.try_recv() {
-//                Ok(emulator_message) => {
-//                    match emulator_message {
-//                        EmulatorMessage::UpdateState(emulator_state) => {
-//                            // Process the emulator state and update the GUI accordingly
-//                            let mut gui = gui.lock().unwrap();
-//                            gui.update_state(emulator_state); // Replace with your GUI update logic
-//                        }
-//                        EmulatorMessage::Terminate => {
-//                            // Terminate the GUI thread gracefully
-//                            break;
-//                        }
-//                    }
-//                }
-//                Err(_) => {
-//                    // No messages from the emulator, continue processing other GUI events
-//                }
-//            }
-//        }
-//    });
-//}
+/*
+fn spawn_gui_thread(
+    gui: Arc<Mutex<NesemuGui>>,
+    gui_rx: Sender<GuiMessage>,
+    emulator_rx: Receiver<EmulatorMessage>,
+) -> thread::JoinHandle<()> {
+    return thread::spawn(move || {
+        std::panic::set_hook(Box::new(|panic_info| {
+            eprintln!("Thread panicked: {:?}", panic_info);
+        }));
+        // GUI initialization code
+        let native_options = eframe::NativeOptions {
+            initial_window_size: Some([400.0, 300.0].into()),
+            min_window_size: Some([300.0, 220.0].into()),
+            ..Default::default()
+        };
+        eframe::run_native(
+            "nesemu",
+            native_options,
+            Box::new(|cc| Box::new(NesemuGui::new(cc, gui_rx, emulator_rx, nes_ref))),
+        ).expect("TODO: panic message");
+        // GUI event loop
+        loop {
+            // Handle messages from the emulator thread
+            match emulator_rx.try_recv() {
+                Ok(emulator_message) => {
+                    match emulator_message {
+                        EmulatorMessage::UpdateState(emulator_state) => {
+                            // Process the emulator state and update the GUI accordingly
+                            let mut gui = gui.lock().unwrap();
+                            gui.request_repaint(emulator_state); // Replace with your GUI update logic
+                        }
+                        EmulatorMessage::Terminate => {
+                            // Terminate the GUI thread gracefully
+                            break;
+                        }
+                    }
+                }
+                Err(_) => {
+                    // No messages from the emulator, continue processing other GUI events
+                }
+            }
+        }
+    });
+}
+*/
 

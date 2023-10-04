@@ -1,15 +1,17 @@
-use std::sync::mpsc::{Receiver, Sender};
+use std::sync::{Arc, Mutex};
+use std::sync::mpsc::Sender;
 
 use egui::{CentralPanel, Grid, ScrollArea, Ui};
-use nesemu_core::Read;
 
-use crate::{EmulatorMessage, EmulatorState, GuiMessage};
+use nesemu_cpu::cpu::{CpuDebugInfo, FlagData};
+
+use crate::{EmulatorState, GuiMessage, Nes};
 
 /// We derive Deserialize/Serialize so we can persist app state on shutdown.
 pub struct NesemuGui {
     state: EmulatorState,
     sender: Sender<GuiMessage>,
-    receiver: Receiver<EmulatorMessage>
+    nes_ref: Arc<Mutex<Nes>>,
 }
 
 //impl Default for NesemuGui {
@@ -20,7 +22,7 @@ pub struct NesemuGui {
 
 impl NesemuGui {
     /// Called once before the first frame.
-    pub fn new(_cc: &eframe::CreationContext<'_>, gui_tx: Sender<GuiMessage>, gui_rx: Receiver<EmulatorMessage>) -> Self {
+    pub fn new(_cc: &eframe::CreationContext<'_>, gui_tx: Sender<GuiMessage>, nes_ref: Arc<Mutex<Nes>>) -> Self {
         // This is also where you can customize the look and feel of egui using
         // `cc.egui_ctx.set_visuals` and `cc.egui_ctx.set_fonts`.
 
@@ -33,25 +35,13 @@ impl NesemuGui {
         NesemuGui {
             state: Default::default(),
             sender: gui_tx,
-            receiver: gui_rx,
+            nes_ref,
         }
     }
 }
 
 impl eframe::App for NesemuGui {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
-
-        while let Ok(update) = self.receiver.try_recv() {
-            match update {
-                EmulatorMessage::UpdateState(new_state) => {
-                    self.state = new_state
-                }
-                EmulatorMessage::Terminate => {
-                    println!("emu said stop!!!")
-                }
-            }
-        }
-
         egui::TopBottomPanel::top("top_panel").show(ctx, |ui| {
             // The top panel is often a good place for a menu bar:
 
@@ -71,10 +61,12 @@ impl eframe::App for NesemuGui {
         });
 
         CentralPanel::default().show(ctx, |ui| {
-            create_ram_panel(ui, "Work RAM", self.state.ram.lock().unwrap().main_ram());
-            create_ram_panel(ui, "PPU Registers", self.state.ram.lock().unwrap().ppu_registers());
-            create_ram_panel(ui, "APU/IO Registers", self.state.ram.lock().unwrap().apu_io_registers());
-            create_ram_panel(ui, "Cartridge Space", self.state.ram.lock().unwrap().cartridge_space());
+            create_ram_panel(ui, "Work RAM", self.nes_ref.lock().unwrap().ram.lock().unwrap().main_ram());
+            create_ram_panel(ui, "PPU Registers", self.nes_ref.lock().unwrap().ram.lock().unwrap().ppu_registers());
+            create_ram_panel(ui, "APU/IO Registers", self.nes_ref.lock().unwrap().ram.lock().unwrap().apu_io_registers());
+            create_ram_panel(ui, "Cartridge Space", self.nes_ref.lock().unwrap().ram.lock().unwrap().cartridge_space());
+            create_cpu_flag_panel(ui, self.nes_ref.lock().unwrap().get_cpu_flags());
+            create_cpu_debug_panel(ui, self.nes_ref.lock().unwrap().get_cpu_debug_info());
         });
     }
     // Called by the frame work to save state before shutdown.
@@ -93,7 +85,7 @@ fn create_ram_panel<T: std::fmt::Debug>(ui: &mut Ui, title: &str, array: &[T]) {
             // Display the array as a grid.
             Grid::new(title).striped(true).show(ui, |ui| {
                 for (i, item) in array.iter().enumerate() {
-                    if i % 8 == 0 {
+                    if i % 32 == 0 {
                         // Display the index of the first element of the line.
                         ui.monospace(format!("{:04X}:", i));
                     }
@@ -101,12 +93,109 @@ fn create_ram_panel<T: std::fmt::Debug>(ui: &mut Ui, title: &str, array: &[T]) {
                     // Display the value of the element.
                     ui.monospace(format!("{:?}", item));
 
-                    if i % 8 == 7 {
+                    if i % 32 == 31 {
                         // Add a newline for every 8 elements.
                         ui.end_row();
                     }
                 }
             });
+        })
+    });
+    ui.add_space(16.);
+}
+
+fn create_cpu_flag_panel(ui: &mut Ui, flags: FlagData) {
+    ui.heading("Flags");
+    ui.separator();
+
+    // Make a scrollable area for the array grid.
+    ui.push_id("cpu-flags", |ui| {
+        Grid::new("cpu flags").striped(true).show(ui, |ui| {
+            ui.label("C:");
+            ui.label(format!("{}", flags.C));
+            ui.end_row();
+
+            ui.label("Z:");
+            ui.label(format!("{}", flags.Z));
+            ui.end_row();
+
+            ui.label("I:");
+            ui.label(format!("{}", flags.I));
+            ui.end_row();
+
+            ui.label("D:");
+            ui.label(format!("{}", flags.D));
+            ui.end_row();
+
+            ui.label("B:");
+            ui.label(format!("{}", flags.B));
+            ui.end_row();
+
+            ui.label("U:");
+            ui.label(format!("{}", flags.U));
+            ui.end_row();
+
+            ui.label("V:");
+            ui.label(format!("{}", flags.V));
+            ui.end_row();
+
+            ui.label("N:");
+            ui.label(format!("{}", flags.N));
+        })
+    });
+    ui.add_space(16.);
+}
+
+fn create_cpu_debug_panel(ui: &mut Ui, info: CpuDebugInfo) {
+    ui.heading("Cpu Info");
+    ui.separator();
+
+    // Make a scrollable area for the array grid.
+    ui.push_id("cpu-info", |ui| {
+        Grid::new("cpu flags").striped(true).show(ui, |ui| {
+            ui.label("Accumulator:");
+            ui.label(format!("{}", info.acc_reg));
+            ui.end_row();
+
+            ui.label("X Register:");
+            ui.label(format!("{}", info.x_reg));
+            ui.end_row();
+
+            ui.label("Y Register:");
+            ui.label(format!("{}", info.y_reg));
+            ui.end_row();
+
+            ui.label("Stack Pointer:");
+            ui.label(format!("{}", info.stk_ptr));
+            ui.end_row();
+
+            ui.label("Program Counter:");
+            ui.label(format!("{}", info.pgrm_ctr));
+            ui.end_row();
+
+            ui.label("Status:");
+            ui.label(format!("{:08b}", info.status));
+            ui.end_row();
+
+            ui.label("Fetched:");
+            ui.label(format!("{}", info.fetched));
+            ui.end_row();
+
+            ui.label("Absolute Address:");
+            ui.label(format!("{}", info.addr_abs));
+            ui.end_row();
+
+            ui.label("Relative Address:");
+            ui.label(format!("{}", info.addr_rel));
+            ui.end_row();
+
+            ui.label("Opcode:");
+            ui.label(format!("{:x}: {:?}", info.opcode_index, info.opcode));
+            ui.end_row();
+
+            ui.label("Cycles:");
+            ui.label(format!("{}", info.cycles));
+            ui.end_row();
         })
     });
     ui.add_space(16.);
