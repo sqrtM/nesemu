@@ -1,17 +1,16 @@
-use std::sync::{Arc, Mutex};
+use std::sync::{Arc, RwLock};
 use std::sync::mpsc::Sender;
 
 use egui::{CentralPanel, Grid, ScrollArea, Ui};
 
 use nesemu_cpu::cpu::{CpuDebugInfo, FlagData};
 
-use crate::{EmulatorState, GuiMessage, Nes};
+use crate::{GuiMessage, Nes};
 
 /// We derive Deserialize/Serialize so we can persist app state on shutdown.
 pub struct NesemuGui {
-    state: EmulatorState,
     sender: Sender<GuiMessage>,
-    nes_ref: Arc<Mutex<Nes>>,
+    nes_ref: Arc<RwLock<Nes>>,
 }
 
 //impl Default for NesemuGui {
@@ -22,7 +21,7 @@ pub struct NesemuGui {
 
 impl NesemuGui {
     /// Called once before the first frame.
-    pub fn new(_cc: &eframe::CreationContext<'_>, gui_tx: Sender<GuiMessage>, nes_ref: Arc<Mutex<Nes>>) -> Self {
+    pub fn new(_cc: &eframe::CreationContext<'_>, gui_tx: Sender<GuiMessage>, nes_ref: Arc<RwLock<Nes>>) -> Self {
         // This is also where you can customize the look and feel of egui using
         // `cc.egui_ctx.set_visuals` and `cc.egui_ctx.set_fonts`.
 
@@ -33,7 +32,6 @@ impl NesemuGui {
         //}
 
         NesemuGui {
-            state: Default::default(),
             sender: gui_tx,
             nes_ref,
         }
@@ -61,12 +59,19 @@ impl eframe::App for NesemuGui {
         });
 
         CentralPanel::default().show(ctx, |ui| {
-            create_ram_panel(ui, "Work RAM", self.nes_ref.lock().unwrap().ram.lock().unwrap().main_ram());
-            create_ram_panel(ui, "PPU Registers", self.nes_ref.lock().unwrap().ram.lock().unwrap().ppu_registers());
-            create_ram_panel(ui, "APU/IO Registers", self.nes_ref.lock().unwrap().ram.lock().unwrap().apu_io_registers());
-            create_ram_panel(ui, "Cartridge Space", self.nes_ref.lock().unwrap().ram.lock().unwrap().cartridge_space());
-            create_cpu_flag_panel(ui, self.nes_ref.lock().unwrap().get_cpu_flags());
-            create_cpu_debug_panel(ui, self.nes_ref.lock().unwrap().get_cpu_debug_info());
+            match &self.nes_ref.try_read() {
+                Ok(emu) => {
+                    create_ram_panel(ui, "Work RAM", &emu.get_main_ram());
+                    create_ram_panel(ui, "PPU Registers", &emu.get_ppu_registers());
+                    create_ram_panel(ui, "APU/IO Registers", &emu.get_apu_io_registers());
+                    create_ram_panel(ui, "Cartridge Space", &emu.get_cartridge_space());
+                    create_cpu_flag_panel(ui, &emu.get_cpu_flags());
+                    create_cpu_debug_panel(ui, &emu.get_cpu_debug_info());
+                }
+                Err(_) => {
+                    // skip that frame
+                }
+            }
         });
     }
     // Called by the frame work to save state before shutdown.
@@ -104,7 +109,7 @@ fn create_ram_panel<T: std::fmt::Debug>(ui: &mut Ui, title: &str, array: &[T]) {
     ui.add_space(16.);
 }
 
-fn create_cpu_flag_panel(ui: &mut Ui, flags: FlagData) {
+fn create_cpu_flag_panel(ui: &mut Ui, flags: &FlagData) {
     ui.heading("Flags");
     ui.separator();
 
@@ -146,7 +151,7 @@ fn create_cpu_flag_panel(ui: &mut Ui, flags: FlagData) {
     ui.add_space(16.);
 }
 
-fn create_cpu_debug_panel(ui: &mut Ui, info: CpuDebugInfo) {
+fn create_cpu_debug_panel(ui: &mut Ui, info: &CpuDebugInfo) {
     ui.heading("Cpu Info");
     ui.separator();
 

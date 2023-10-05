@@ -1,7 +1,7 @@
 #![warn(clippy::all, rust_2018_idioms)]
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")] // hide console window on Windows in release
 
-use std::sync::{Arc, mpsc, Mutex};
+use std::sync::{Arc, mpsc, RwLock};
 use std::sync::mpsc::{Receiver, Sender};
 use std::thread;
 use std::time::Duration;
@@ -18,54 +18,48 @@ use crate::app::NesemuGui;
 mod app;
 
 pub struct Nes {
-    ram: Arc<Mutex<CpuMemory>>,
     cpu: CPU<Bus<CpuMemory>>,
+    ram: Arc<RwLock<CpuMemory>>,
+    bus: Arc<RwLock<Bus<CpuMemory>>>,
 }
 
 #[derive(Serialize, Deserialize, Default)]
 pub struct EmulatorState {
-    ram: Arc<Mutex<CpuMemory>>,
+    ram: Arc<RwLock<CpuMemory>>,
     flags: FlagData,
 }
 
-impl EmulatorState {
+impl Nes {
     fn get_main_ram(&self) -> [u8; 2048] {
-        *self.ram.lock().unwrap().main_ram()
+        *self.ram.read().unwrap().main_ram()
     }
 
     pub fn get_main_ram_mirror(&self) -> [u8; 6144] {
-        *self.ram.lock().unwrap().main_ram_mirror()
+        *self.ram.read().unwrap().main_ram_mirror()
     }
 
     pub fn get_ppu_registers(&self) -> [u8; 8] {
-        *self.ram.lock().unwrap().ppu_registers()
+        *self.ram.read().unwrap().ppu_registers()
     }
 
     pub fn get_ppu_mirrors(&self) -> [u8; 8184] {
-        *self.ram.lock().unwrap().ppu_mirrors()
+        *self.ram.read().unwrap().ppu_mirrors()
     }
 
     pub fn get_apu_io_registers(&self) -> [u8; 24] {
-        *self.ram.lock().unwrap().apu_io_registers()
+        *self.ram.read().unwrap().apu_io_registers()
     }
 
     pub fn get_apu_io_expansion(&self) -> [u8; 8] {
-        *self.ram.lock().unwrap().apu_io_expansion()
+        *self.ram.read().unwrap().apu_io_expansion()
     }
 
     pub fn get_cartridge_space(&self) -> [u8; 49120] {
-        *self.ram.lock().unwrap().cartridge_space()
+        *self.ram.read().unwrap().cartridge_space()
     }
 }
 
 impl Nes {
-    fn generate_state(&self) -> EmulatorState {
-        EmulatorState {
-            ram: self.ram.clone(),
-            flags: self.get_cpu_flags(),
-        }
-    }
-
     fn get_cpu_flags(&self) -> FlagData {
         self.cpu.get_flag_data()
     }
@@ -80,16 +74,13 @@ impl Nes {
 fn main() -> eframe::Result<()> {
     env_logger::init(); // Log to stderr (if you run with `RUST_LOG=debug`).
 
-    let ram = Arc::new(Mutex::new(CpuMemory::default()));
-    let mut bus: Bus<CpuMemory> = Bus::new();
-    let mut cpu: CPU<Bus<CpuMemory>> = CPU::default();
-
-    bus.connect_ram(Arc::clone(&ram));
-    cpu.connect_bus(Box::new(bus));
+    let ram = Arc::new(RwLock::new(CpuMemory::default()));
+    let bus = Arc::new(RwLock::new(Bus::new(ram.clone())));
+    let mut cpu: CPU<Bus<CpuMemory>> = CPU::new(bus.clone());
 
     cpu.reset();
 
-    let nes_ref = Arc::new(Mutex::new(Nes { ram, cpu }));
+    let nes_ref = Arc::new(RwLock::new(Nes { ram: ram.clone(), cpu, bus: bus.clone() }));
 
     // Set up communication channels between emulator and GUI
     let (emulator_tx, emulator_rx, gui_tx, gui_rx) = create_channels();
@@ -119,6 +110,9 @@ fn main() -> eframe::Result<()> {
                                 }
                             }
                         }
+                        // just a small sleep for now.. we'll get something global
+                        // later. Just help the thing slow down a little.
+                        thread::sleep(Duration::from_millis(10))
                     }
                 });
                 Box::new(NesemuGui::new(cc, gui_tx, nes_ref))
@@ -148,16 +142,13 @@ fn main() {
 }
 
 pub enum EmulatorMessage {
-    UpdateState(EmulatorState),
     Update,
-    // Example: Send emulator state updates
-    Terminate,                  // Example: Terminate the emulator thread
+    Terminate,
 }
 
 pub enum GuiMessage {
     UpdateUI,
-    // Example: Send data to update the GUI
-    Terminate, // Example: Terminate the GUI thread
+    Terminate,
 }
 
 fn create_channels() -> (
@@ -172,14 +163,14 @@ fn create_channels() -> (
 }
 
 fn spawn_emulator_thread(
-    emulator: Arc<Mutex<Nes>>,
+    emulator: Arc<RwLock<Nes>>,
     emulator_tx: Sender<EmulatorMessage>,
     _gui_tx: Receiver<GuiMessage>,
 ) -> thread::JoinHandle<()> {
     thread::spawn(move || {
         loop {
-            thread::sleep(Duration::from_millis(200));
-            let mut lock = emulator.lock().unwrap();
+            thread::sleep(Duration::from_millis(16));
+            let mut lock = emulator.write().unwrap();
             lock.cpu.clock();
             emulator_tx
                 .send(EmulatorMessage::Update)
