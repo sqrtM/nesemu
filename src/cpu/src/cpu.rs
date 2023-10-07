@@ -1,3 +1,4 @@
+use std::sync::{Arc, RwLock};
 use nesemu_core::{Read, Write};
 use serde::{Deserialize, Serialize};
 
@@ -6,7 +7,7 @@ use crate::cpu::StatusFlag::{B, C, D, I, N, U, V, Z};
 use crate::instruction::Instruction;
 
 pub struct CPU<Bus: Read + Write> {
-    bus: Option<Box<Bus>>,
+    bus: Arc<RwLock<Bus>>,
 
     pub acc_reg: u8,
     pub x_reg: u8,
@@ -65,8 +66,8 @@ impl StatusFlag {
 impl<Bus: Read + Write> Read for CPU<Bus> {
     fn read(&self, addr: u16, _read_only: bool) -> u8 {
         self.bus
-            .as_ref()
-            .expect("no bus connected")
+            .read()
+            .unwrap()
             .read(addr, _read_only)
     }
 }
@@ -74,8 +75,8 @@ impl<Bus: Read + Write> Read for CPU<Bus> {
 impl<Bus: Read + Write> Write for CPU<Bus> {
     fn write(&mut self, addr: u16, data: u8) {
         self.bus
-            .as_mut()
-            .expect("no bus connected")
+            .write()
+            .unwrap()
             .write(addr, data)
     }
 }
@@ -187,10 +188,10 @@ impl<Bus: Read + Write> CPU<Bus> {
     }
 }
 
-impl<Bus: Read + Write> Default for CPU<Bus> {
-    fn default() -> Self {
+impl<Bus: Read + Write> CPU<Bus> {
+    pub fn new(bus: Arc<RwLock<Bus>>) -> Self {
         CPU {
-            bus: None,
+            bus,
             acc_reg: 0,
             x_reg: 0,
             y_reg: 0,
@@ -203,11 +204,5 @@ impl<Bus: Read + Write> Default for CPU<Bus> {
             opcode: 0,
             cycles: 0,
         }
-    }
-}
-
-impl<Bus: Read + Write> CPU<Bus> {
-    pub fn connect_bus(&mut self, bus: Box<Bus>) {
-        self.bus = Some(bus);
     }
 }

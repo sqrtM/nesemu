@@ -1,6 +1,6 @@
 use std::cell::RefCell;
 use std::rc::Rc;
-use std::sync::{Arc, Mutex};
+use std::sync::{Arc, Mutex, RwLock};
 
 use nesemu_core::{Read, Write};
 use crate::memory::CpuMemory;
@@ -9,7 +9,7 @@ pub struct Bus<Memory>
 where
     Memory: Read + Write,
 {
-    pub ram: Option<Arc<Mutex<Memory>>>,
+    pub ram: Arc<RwLock<Memory>>,
 }
 
 impl<Memory> Write for Bus<Memory>
@@ -18,9 +18,7 @@ where
 {
     fn write(&mut self, addr: u16, data: u8) {
         self.ram
-            .as_ref()
-            .expect("RAM not found!")
-            .lock()
+            .write()
             .unwrap()
             .write(addr, data)
     }
@@ -32,9 +30,7 @@ where
 {
     fn read(&self, addr: u16, _read_only: bool) -> u8 {
         self.ram
-            .as_ref()
-            .expect("RAM not found!")
-            .lock()
+            .read()
             .unwrap()
             .read(addr, false)
     }
@@ -44,11 +40,7 @@ impl<Memory> Bus<Memory>
 where
     Memory: Read + Write,
 {
-    pub fn new() -> Self {
-        Bus { ram: None }
-    }
-
-    pub fn connect_ram(&mut self, ram: Arc<Mutex<Memory>>) {
-        self.ram = Some(ram.clone());
+    pub fn new(ram: Arc<RwLock<Memory>>) -> Self {
+        Bus { ram }
     }
 }

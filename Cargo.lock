@@ -1499,7 +1499,9 @@ dependencies = [
  "nesemu_cpu",
  "serde",
  "serde_bytes",
+ "wasm-bindgen",
  "wasm-bindgen-futures",
+ "web-sys",
 ]
 
 [[package]]

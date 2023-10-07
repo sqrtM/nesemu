@@ -6,8 +6,10 @@ use std::sync::mpsc::{Receiver, Sender};
 use std::thread;
 use std::time::Duration;
 
-use eframe::App;
 use serde::{Deserialize, Serialize};
+use wasm_bindgen::JsCast;
+use wasm_bindgen::prelude::Closure;
+use web_sys::Worker;
 
 use nesemu::bus::Bus;
 use nesemu::memory::CpuMemory;
@@ -76,7 +78,7 @@ fn main() -> eframe::Result<()> {
 
     let ram = Arc::new(RwLock::new(CpuMemory::default()));
     let bus = Arc::new(RwLock::new(Bus::new(ram.clone())));
-    let mut cpu: CPU<Bus<CpuMemory>> = CPU::new(bus.clone());
+    let mut cpu = CPU::new(bus.clone());
 
     cpu.reset();
 
@@ -118,10 +120,8 @@ fn main() -> eframe::Result<()> {
                 Box::new(NesemuGui::new(cc, gui_tx, nes_ref))
             }),
     )
-    //
 }
 
-// When compiling to web using trunk:
 #[cfg(target_arch = "wasm32")]
 fn main() {
     // Redirect `log` message to `console.log` and friends:
@@ -134,7 +134,39 @@ fn main() {
             .start(
                 "the_canvas_id", // hardcode it
                 web_options,
-                Box::new(|cc| Box::new(NesemuGui::new(cc))),
+                Box::new(|cc| {
+
+                    let ram = Arc::new(RwLock::new(CpuMemory::default()));
+                    let bus = Arc::new(RwLock::new(Bus::new(ram.clone())));
+                    let mut cpu = CPU::new(bus.clone());
+                    cpu.reset();
+
+                    let nes = Nes { ram: ram.clone(), cpu, bus: bus.clone() };
+                    let nes_ref = Arc::new(RwLock::new(nes));
+                    let nes_ref_2 = nes_ref.clone();
+
+
+                    // Set up communication channels between emulator and GUI
+                    let (emulator_tx, emulator_rx, gui_tx, gui_rx) = create_channels();
+
+                    let worker = Worker::new("./worker.js").unwrap();
+                    // This closure will be called when the worker sends a message
+                    let onmessage_callback = Closure::wrap(Box::new(move |event: web_sys::MessageEvent| {
+                        // Handle the message from the worker
+                        let data = event.data();
+                        let data_str = data.as_string().unwrap();
+                        nes_ref_2.clone().write().unwrap().cpu.clock()
+
+                        // Update the GUI...
+                    }) as Box<dyn FnMut(_)>);
+
+                    // Set the `onmessage` handler of the worker to our callback
+                    worker.set_onmessage(Some(onmessage_callback.as_ref().unchecked_ref()));
+
+                    // Don't drop the callback
+                    onmessage_callback.forget();
+                    Box::new(NesemuGui::new(cc, gui_tx, nes_ref.clone()))
+                }),
             )
             .await
             .expect("failed to start eframe");
