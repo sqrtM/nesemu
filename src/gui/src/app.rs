@@ -1,11 +1,12 @@
-use std::sync::{Arc, RwLock};
 use std::sync::mpsc::Sender;
+use std::sync::{Arc, RwLock};
 
 use egui::{CentralPanel, Grid, ScrollArea, Ui};
 
+use nesemu::Nes;
 use nesemu_cpu::cpu::{CpuDebugInfo, FlagData};
 
-use crate::{GuiMessage, Nes};
+use crate::GuiMessage;
 
 /// We derive Deserialize/Serialize so we can persist app state on shutdown.
 pub struct NesemuGui {
@@ -21,7 +22,11 @@ pub struct NesemuGui {
 
 impl NesemuGui {
     /// Called once before the first frame.
-    pub fn new(_cc: &eframe::CreationContext<'_>, gui_tx: Sender<GuiMessage>, nes_ref: Arc<RwLock<Nes>>) -> Self {
+    pub fn new(
+        _cc: &eframe::CreationContext<'_>,
+        gui_tx: Sender<GuiMessage>,
+        nes_ref: Arc<RwLock<Nes>>,
+    ) -> Self {
         // This is also where you can customize the look and feel of egui using
         // `cc.egui_ctx.set_visuals` and `cc.egui_ctx.set_fonts`.
 

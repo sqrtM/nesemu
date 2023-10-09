@@ -1,17 +1,18 @@
-#![cfg(target_arch = "wasm32")]
+//#![cfg(target_arch = "wasm32")]
 
 use std::sync::{Arc, RwLock};
 
 use nesemu::bus::Bus;
 use nesemu::memory::CpuMemory;
+use nesemu::Nes;
 use nesemu_cpu::cpu::CPU;
 
-use crate::{create_channels, Nes};
 use crate::app::NesemuGui;
+use crate::create_channels;
 
-pub fn run() -> () {
-    use wasm_bindgen::JsCast;
+pub fn run() {
     use wasm_bindgen::prelude::Closure;
+    use wasm_bindgen::JsCast;
     use web_sys::Worker;
 
     // Redirect `log` message to `console.log` and friends:
@@ -30,7 +31,11 @@ pub fn run() -> () {
                     let mut cpu = CPU::new(bus.clone());
                     cpu.reset();
 
-                    let nes = Nes { ram: ram.clone(), cpu, bus: bus.clone() };
+                    let nes = Nes {
+                        ram: ram.clone(),
+                        cpu,
+                        bus: bus.clone(),
+                    };
                     let nes_ref = Arc::new(RwLock::new(nes));
                     let nes_ref_2 = nes_ref.clone();
 
@@ -39,12 +44,13 @@ pub fn run() -> () {
 
                     let ctx = cc.egui_ctx.clone();
                     let worker = Worker::new("./worker.js").unwrap();
-                    let onmessage_callback = Closure::wrap(Box::new(move |event: web_sys::MessageEvent| {
-                        // if we ever want to handle the data from js
-                        //let data = event.data();
-                        nes_ref_2.clone().write().unwrap().cpu.clock();
-                        ctx.request_repaint();
-                    }) as Box<dyn FnMut(_)>);
+                    let onmessage_callback =
+                        Closure::wrap(Box::new(move |event: web_sys::MessageEvent| {
+                            // if we ever want to handle the data from js
+                            //let data = event.data();
+                            nes_ref_2.clone().write().unwrap().cpu.clock();
+                            ctx.request_repaint();
+                        }) as Box<dyn FnMut(_)>);
                     worker.set_onmessage(Some(onmessage_callback.as_ref().unchecked_ref()));
                     onmessage_callback.forget();
 
@@ -52,6 +58,6 @@ pub fn run() -> () {
                 }),
             )
             .await
-            .expect("failed to start eframe");
+            .expect("failed to start web client");
     });
 }

@@ -1,76 +1,18 @@
 #![warn(clippy::all, rust_2018_idioms)]
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")] // hide console window on Windows in release
 
-use std::sync::{Arc, mpsc, RwLock};
+use std::sync::mpsc;
 use std::sync::mpsc::{Receiver, Sender};
 
-use serde::{Deserialize, Serialize};
-
-use nesemu::bus::Bus;
-use nesemu::memory::CpuMemory;
-use nesemu_cpu::cpu::{CPU, CpuDebugInfo, FlagData};
-
 mod app;
-mod web;
 mod native;
+mod web;
 
 fn main() {
     #[cfg(not(target_arch = "wasm32"))]
-    native::run().unwrap();
+    native::run();
     #[cfg(target_arch = "wasm32")]
     web::run();
-}
-
-pub struct Nes {
-    cpu: CPU<Bus<CpuMemory>>,
-    ram: Arc<RwLock<CpuMemory>>,
-    bus: Arc<RwLock<Bus<CpuMemory>>>,
-}
-
-#[derive(Serialize, Deserialize, Default)]
-pub struct EmulatorState {
-    ram: Arc<RwLock<CpuMemory>>,
-    flags: FlagData,
-}
-
-impl Nes {
-    fn get_main_ram(&self) -> [u8; 2048] {
-        *self.ram.read().unwrap().main_ram()
-    }
-
-    pub fn get_main_ram_mirror(&self) -> [u8; 6144] {
-        *self.ram.read().unwrap().main_ram_mirror()
-    }
-
-    pub fn get_ppu_registers(&self) -> [u8; 8] {
-        *self.ram.read().unwrap().ppu_registers()
-    }
-
-    pub fn get_ppu_mirrors(&self) -> [u8; 8184] {
-        *self.ram.read().unwrap().ppu_mirrors()
-    }
-
-    pub fn get_apu_io_registers(&self) -> [u8; 24] {
-        *self.ram.read().unwrap().apu_io_registers()
-    }
-
-    pub fn get_apu_io_expansion(&self) -> [u8; 8] {
-        *self.ram.read().unwrap().apu_io_expansion()
-    }
-
-    pub fn get_cartridge_space(&self) -> [u8; 49120] {
-        *self.ram.read().unwrap().cartridge_space()
-    }
-}
-
-impl Nes {
-    fn get_cpu_flags(&self) -> FlagData {
-        self.cpu.get_flag_data()
-    }
-
-    fn get_cpu_debug_info(&self) -> CpuDebugInfo {
-        self.cpu.get_cpu_debug_info()
-    }
 }
 
 pub enum EmulatorMessage {
@@ -83,7 +25,7 @@ pub enum GuiMessage {
     Terminate,
 }
 
-fn create_channels() -> (
+pub fn create_channels() -> (
     Sender<EmulatorMessage>,
     Receiver<GuiMessage>,
     Sender<GuiMessage>,
@@ -93,7 +35,6 @@ fn create_channels() -> (
     let (gui_tx, emulator_rx) = mpsc::channel();
     (emulator_tx, emulator_rx, gui_tx, gui_rx)
 }
-
 
 /*
 
@@ -144,4 +85,3 @@ fn spawn_gui_thread(
     });
 }
 */
-
