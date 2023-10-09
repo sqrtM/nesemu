@@ -20,6 +20,8 @@ pub fn run() {
     let bus = Arc::new(RwLock::new(Bus::new(ram.clone())));
     let mut cpu = CPU::new(bus.clone());
 
+    Nes::load_rom("nestest.nes").expect("TODO: panic message");
+
     cpu.reset();
 
     let nes_ref = Arc::new(RwLock::new(Nes {
@@ -27,6 +29,9 @@ pub fn run() {
         cpu,
         bus: bus.clone(),
     }));
+
+
+
 
     // Set up communication channels between emulator and GUI
     let (emulator_tx, emulator_rx, gui_tx, gui_rx) = create_channels();
