@@ -101,7 +101,7 @@ fn create_ram_panel<T: std::fmt::Debug>(ui: &mut Ui, title: &str, array: &[T]) {
                     }
 
                     // Display the value of the element.
-                    ui.monospace(format!("{:?}", item));
+                    ui.monospace(format!("{:X?}", item));
 
                     if i % 32 == 31 {
                         // Add a newline for every 8 elements.
@@ -164,23 +164,23 @@ fn create_cpu_debug_panel(ui: &mut Ui, info: &CpuDebugInfo) {
     ui.push_id("cpu-info", |ui| {
         Grid::new("cpu flags").striped(true).show(ui, |ui| {
             ui.label("Accumulator:");
-            ui.label(format!("{}", info.acc_reg));
+            ui.label(format!("{:x}", info.acc_reg));
             ui.end_row();
 
             ui.label("X Register:");
-            ui.label(format!("{}", info.x_reg));
+            ui.label(format!("{:x}", info.x_reg));
             ui.end_row();
 
             ui.label("Y Register:");
-            ui.label(format!("{}", info.y_reg));
+            ui.label(format!("{:x}", info.y_reg));
             ui.end_row();
 
             ui.label("Stack Pointer:");
-            ui.label(format!("{}", info.stk_ptr));
+            ui.label(format!("{:x}", info.stk_ptr));
             ui.end_row();
 
             ui.label("Program Counter:");
-            ui.label(format!("{}", info.pgrm_ctr));
+            ui.label(format!("{:x}", info.pgrm_ctr));
             ui.end_row();
 
             ui.label("Status:");
@@ -188,19 +188,19 @@ fn create_cpu_debug_panel(ui: &mut Ui, info: &CpuDebugInfo) {
             ui.end_row();
 
             ui.label("Fetched:");
-            ui.label(format!("{}", info.fetched));
+            ui.label(format!("{:x}", info.fetched));
             ui.end_row();
 
             ui.label("Absolute Address:");
-            ui.label(format!("{}", info.addr_abs));
+            ui.label(format!("{:x}", info.addr_abs));
             ui.end_row();
 
             ui.label("Relative Address:");
-            ui.label(format!("{}", info.addr_rel));
+            ui.label(format!("{:x}", info.addr_rel));
             ui.end_row();
 
             ui.label("Opcode:");
-            ui.label(format!("{:x}: {:?}", info.opcode_index, info.opcode));
+            ui.label(format!("{:X}: {:?}", info.opcode_index, info.opcode));
             ui.end_row();
 
             ui.label("Cycles:");

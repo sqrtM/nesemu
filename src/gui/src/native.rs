@@ -18,17 +18,17 @@ pub fn run() {
 
     let ram = Arc::new(RwLock::new(CpuMemory::default()));
     let bus = Arc::new(RwLock::new(Bus::new(ram.clone())));
-    let mut cpu = CPU::new(bus.clone());
+    let cpu = CPU::new(bus.clone());
 
-    Nes::load_rom("nestest.nes").expect("TODO: panic message");
-
-    cpu.reset();
-
-    let nes_ref = Arc::new(RwLock::new(Nes {
+    let mut nes = Nes {
         ram: ram.clone(),
         cpu,
         bus: bus.clone(),
-    }));
+    };
+    nes.load_rom("nestest.nes").expect("TODO: panic message");
+    nes.cpu.reset();
+
+    let nes_ref = Arc::new(RwLock::new(nes));
 
 
 
