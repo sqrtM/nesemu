@@ -1,7 +1,8 @@
-use crate::addressing_mode::AddressingMode::IMP;
-use crate::cpu::StatusFlag::{B, C, D, I, N, U, V, Z};
-use crate::cpu::CPU;
 use nesemu_core::{Read, Write};
+
+use crate::addressing_mode::AddressingMode::IMP;
+use crate::cpu::CPU;
+use crate::cpu::StatusFlag::{B, C, D, I, N, U, V, Z};
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum Opcode {
@@ -269,6 +270,7 @@ impl<Bus: Read + Write> CPU<Bus> {
                 self.pgrm_ctr = self.addr_abs;
                 0
             }
+            // broken ??
             Opcode::JSR => {
                 self.pgrm_ctr -= 1;
                 self.write(
@@ -315,6 +317,7 @@ impl<Bus: Read + Write> CPU<Bus> {
             Opcode::NOP => {
                 // This is not hardware identical, since in the 6502,
                 // some nOpcodes take 1 cycle extra. TODO???
+                self.pgrm_ctr += 1;
                 0
             }
             Opcode::ORA => {
@@ -479,6 +482,7 @@ impl<Bus: Read + Write> CPU<Bus> {
             }
             Opcode::XXX => {
                 // any unreachable codes are nOps
+                self.pgrm_ctr += 1;
                 0
             }
         }

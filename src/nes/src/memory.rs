@@ -17,12 +17,12 @@ pub struct CpuMemory {
     #[serde(with = "array_serde")]
     apu_io_expansion: [u8; 0x0008],
     #[serde(with = "array_serde")]
-    cartridge_space: [u8; 0xBFE0],
+    pub cartridge_space: [u8; 0xBFE0],
 }
 
 impl Default for CpuMemory {
     fn default() -> Self {
-        let mut c = CpuMemory {
+        Self {
             main_ram: [0; 0x0800],
             main_ram_mirror: [0; 0x1800],
             ppu_registers: [0; 0x0008],
@@ -30,42 +30,7 @@ impl Default for CpuMemory {
             apu_io_registers: [0; 0x0018],
             apu_io_expansion: [0; 0x0008],
             cartridge_space: [0; 0xBFE0],
-        };
-        c.write(0x8000, 0xA2);
-        c.write(1 + 0x8000, 0x0A);
-        c.write(2 + 0x8000, 0x8E);
-        c.write(3 + 0x8000, 0x00);
-        c.write(4 + 0x8000, 0x00);
-        c.write(5 + 0x8000, 0xA2);
-        c.write(6 + 0x8000, 0x03);
-        c.write(7 + 0x8000, 0x8E);
-
-        c.write(8 + 0x8000, 0x01);
-        c.write(9 + 0x8000, 0x00);
-        c.write(10 + 0x8000, 0xAC);
-        c.write(11 + 0x8000, 0x00);
-        c.write(12 + 0x8000, 0x00);
-        c.write(13 + 0x8000, 0xA9);
-        c.write(14 + 0x8000, 0x00);
-        c.write(15 + 0x8000, 0x18);
-
-        c.write(16 + 0x8000, 0x6D);
-        c.write(17 + 0x8000, 0x01);
-        c.write(18 + 0x8000, 0x00);
-        c.write(19 + 0x8000, 0x88);
-        c.write(20 + 0x8000, 0xD0);
-        c.write(21 + 0x8000, 0xFA);
-        c.write(22 + 0x8000, 0x8D);
-        c.write(23 + 0x8000, 0x02);
-
-        c.write(24 + 0x8000, 0x00);
-        c.write(25 + 0x8000, 0xEA);
-        c.write(26 + 0x8000, 0xEA);
-        c.write(27 + 0x8000, 0xEA);
-
-        c.write(0xFFFC, 0x00);
-        c.write(0xFFFD, 0x80);
-        c
+        }
     }
 }
 
@@ -117,8 +82,8 @@ impl Write for CpuMemory {
     fn write(&mut self, address: u16, data: u8) {
         match address {
             0x0000..=0x07FF => self.main_ram[address as usize & 0x07FF] = data,
-            0x0800..=0x1FFF => self.ppu_registers[address as usize & 0x0007] = data,
-            0x2000..=0x2007 => self.ppu_mirrors[address as usize & 0x0017] = data,
+            0x0800..=0x1FFF => self.main_ram_mirror[address as usize & 0x0007] = data,
+            0x2000..=0x2007 => self.ppu_registers[address as usize & 0x0017] = data,
             0x2008..=0x3FFF => self.ppu_mirrors[address as usize & 0x1FF7] = data,
             0x4000..=0x4017 => self.apu_io_registers[address as usize & 0x0016] = data,
             0x4018..=0x401F => self.apu_io_expansion[address as usize & 0x0006] = data,
@@ -129,7 +94,6 @@ impl Write for CpuMemory {
 }
 
 impl CpuMemory {
-
     pub fn main_ram(&self) -> &[u8; 2048] {
         &self.main_ram
     }

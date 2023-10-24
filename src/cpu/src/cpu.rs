@@ -1,6 +1,11 @@
+use std::fmt::format;
+use std::fs::OpenOptions;
+use std::io::Write as fsWrite;
 use std::sync::{Arc, RwLock};
-use nesemu_core::{Read, Write};
+
 use serde::{Deserialize, Serialize};
+
+use nesemu_core::{Read, Write};
 
 use crate::addressing_mode::AddressingMode;
 use crate::cpu::StatusFlag::{B, C, D, I, N, U, V, Z};
@@ -25,26 +30,40 @@ pub struct CPU<Bus: Read + Write> {
 
 #[derive(Debug)]
 pub enum StatusFlag {
-    C, // Carry
-    Z, // Zero
-    I, // Interrupt Disable
-    D, // Decimal
-    B, // "B" Flag
-    U, // Unused (always 1)
-    V, // Overflow
+    C,
+    // Carry
+    Z,
+    // Zero
+    I,
+    // Interrupt Disable
+    D,
+    // Decimal
+    B,
+    // "B" Flag
+    U,
+    // Unused (always 1)
+    V,
+    // Overflow
     N, // Negative
 }
 
 #[allow(non_snake_case)]
 #[derive(Default, Deserialize, Serialize)]
 pub struct FlagData {
-    pub C: u8, // Carry
-    pub Z: u8, // Zero
-    pub I: u8, // Interrupt Disable
-    pub D: u8, // Decimal
-    pub B: u8, // "B" Flag
-    pub U: u8, // Unused (always 1)
-    pub V: u8, // Overflow
+    pub C: u8,
+    // Carry
+    pub Z: u8,
+    // Zero
+    pub I: u8,
+    // Interrupt Disable
+    pub D: u8,
+    // Decimal
+    pub B: u8,
+    // "B" Flag
+    pub U: u8,
+    // Unused (always 1)
+    pub V: u8,
+    // Overflow
     pub N: u8, // Negative
 }
 
@@ -81,6 +100,7 @@ impl<Bus: Read + Write> Write for CPU<Bus> {
     }
 }
 
+#[derive(Debug)]
 pub struct CpuDebugInfo {
     pub acc_reg: u8,
     pub x_reg: u8,
@@ -101,11 +121,21 @@ impl<Bus: Read + Write> CPU<Bus> {
     pub fn clock(&mut self) {
         if self.cycles == 0 {
             self.opcode = self.read(self.pgrm_ctr, false);
-            self.pgrm_ctr += 1;
             let instruction = self.lookup(self.opcode);
+            //log
+            let mut file = OpenOptions::new()
+                .write(true)
+                .append(true)
+                .open("log.txt")
+                .unwrap();
+            let m = format!("{:X?}", self.get_cpu_debug_info());
+            if let Err(e) = writeln!(file, "{}", m) {
+                eprintln!("Couldn't write to file: {}", e);
+            }
             self.cycles = instruction.cycles
                 + self.address(instruction.addressing_mode)
                 + self.operation(instruction.opcode);
+            self.pgrm_ctr += 1;
         } else {
             self.cycles -= 1;
         }
@@ -168,11 +198,8 @@ impl<Bus: Read + Write> CPU<Bus> {
     }
 
     pub fn reset(&mut self) {
-        self.addr_abs = 0xFFFC;
-        let low: u16 = self.read(self.addr_abs, false) as u16;
-        let hi: u16 = self.read(self.addr_abs + 1, false) as u16;
-
-        self.pgrm_ctr = (hi << 8) | low;
+        self.pgrm_ctr = 0xC5F5;
+        //?? self.pgrm_ctr = 0xC5F5;
 
         self.acc_reg = 0;
         self.x_reg = 0;
@@ -184,7 +211,7 @@ impl<Bus: Read + Write> CPU<Bus> {
         self.addr_abs = 0;
         self.fetched = 0;
 
-        self.cycles = 8;
+        self.cycles = 0;
     }
 }
 

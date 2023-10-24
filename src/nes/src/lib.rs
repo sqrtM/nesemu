@@ -7,6 +7,7 @@ use crate::memory::CpuMemory;
 
 pub mod bus;
 pub mod memory;
+mod rom_loader;
 
 pub struct Nes {
     pub cpu: CPU<Bus<CpuMemory>>,
