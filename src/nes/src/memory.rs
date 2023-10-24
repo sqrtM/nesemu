@@ -38,15 +38,15 @@ mod array_serde {
     use serde::{Deserialize, Deserializer, Serialize, Serializer};
 
     pub fn serialize<S>(array: &[u8], serializer: S) -> Result<S::Ok, S::Error>
-        where
-            S: Serializer,
+    where
+        S: Serializer,
     {
         array.serialize(serializer)
     }
 
     pub fn deserialize<'de, D, const N: usize>(deserializer: D) -> Result<[u8; N], D::Error>
-        where
-            D: Deserializer<'de>,
+    where
+        D: Deserializer<'de>,
     {
         let vec: Vec<u8> = Vec::deserialize(deserializer)?;
         if vec.len() == N {
