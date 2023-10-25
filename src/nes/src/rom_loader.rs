@@ -24,7 +24,7 @@ impl Nes {
         let mut bytes: Vec<u8> = fs::read(path).expect("prob openin file");
         bytes.drain(0..0x10);
         for (k, v) in bytes.iter().enumerate() {
-            if (k as u16) < 0x4000u16 {
+            if (k) < 0x4000 {
                 self.bus.write().unwrap().write((k + 0x8000) as u16, *v);
                 self.bus.write().unwrap().write((k + 0xC000) as u16, *v);
             }

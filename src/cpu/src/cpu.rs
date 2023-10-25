@@ -1,5 +1,5 @@
-use std::fmt::format;
-use std::fs::OpenOptions;
+use std::fmt::Debug;
+use std::fs::{File, OpenOptions};
 use std::io::Write as fsWrite;
 use std::sync::{Arc, RwLock};
 
@@ -26,6 +26,8 @@ pub struct CPU<Bus: Read + Write> {
     pub addr_rel: u16,
     pub opcode: u8,
     pub cycles: u8,
+
+    pub logger: File,
 }
 
 #[derive(Debug)]
@@ -122,16 +124,13 @@ impl<Bus: Read + Write> CPU<Bus> {
         if self.cycles == 0 {
             self.opcode = self.read(self.pgrm_ctr, false);
             let instruction = self.lookup(self.opcode);
-            //log
-            let mut file = OpenOptions::new()
-                .write(true)
-                .append(true)
-                .open("log.txt")
-                .unwrap();
-            let m = format!("{:X?}", self.get_cpu_debug_info());
-            if let Err(e) = writeln!(file, "{}", m) {
-                eprintln!("Couldn't write to file: {}", e);
+
+            // logging
+            #[cfg(debug_assertions)]
+            {
+                self.format_debug_string(&instruction);
             }
+
             self.cycles = instruction.cycles
                 + self.address(instruction.addressing_mode)
                 + self.operation(instruction.opcode);
@@ -178,6 +177,21 @@ impl<Bus: Read + Write> CPU<Bus> {
             cycles: self.cycles,
         }
     }
+
+    pub fn format_debug_string(&self, inst: &Instruction) {
+        let m = format!(
+            "{:X?} : {:0<2X?} - {:?}:{:?}     A:{:2X?} X:{:2X?} Y:{:2X?} P:{:0<8b} SP:{:2X?} CYC:{:?}",
+            self.pgrm_ctr, self.opcode, inst.opcode, inst.addressing_mode, self.acc_reg, self.x_reg, self.y_reg, self.status, self.stk_ptr, inst.cycles
+        );
+        let mut file = OpenOptions::new()
+            .write(true)
+            .append(true)
+            .open("log.txt")
+            .unwrap();
+        if let Err(e) = writeln!(file, "{}", m) {
+            eprintln!("Couldn't write to file: {}", e);
+        }
+    }
 }
 
 impl<Bus: Read + Write> CPU<Bus> {
@@ -198,8 +212,7 @@ impl<Bus: Read + Write> CPU<Bus> {
     }
 
     pub fn reset(&mut self) {
-        self.pgrm_ctr = 0xC5F5;
-        //?? self.pgrm_ctr = 0xC5F5;
+        self.pgrm_ctr = 0xC000;
 
         self.acc_reg = 0;
         self.x_reg = 0;
@@ -230,6 +243,11 @@ impl<Bus: Read + Write> CPU<Bus> {
             addr_rel: 0,
             opcode: 0,
             cycles: 0,
+            logger: OpenOptions::new()
+                .write(true)
+                .append(true)
+                .open("log.txt")
+                .unwrap(),
         }
     }
 }

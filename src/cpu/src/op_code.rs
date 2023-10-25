@@ -317,7 +317,7 @@ impl<Bus: Read + Write> CPU<Bus> {
             Opcode::NOP => {
                 // This is not hardware identical, since in the 6502,
                 // some nOpcodes take 1 cycle extra. TODO???
-                self.pgrm_ctr += 1;
+                self.pgrm_ctr -= 1;
                 0
             }
             Opcode::ORA => {
@@ -482,7 +482,6 @@ impl<Bus: Read + Write> CPU<Bus> {
             }
             Opcode::XXX => {
                 // any unreachable codes are nOps
-                self.pgrm_ctr += 1;
                 0
             }
         }

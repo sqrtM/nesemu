@@ -1,7 +1,7 @@
 #![cfg(not(target_arch = "wasm32"))]
 
-use std::sync::mpsc::{Receiver, Sender};
 use std::sync::{Arc, RwLock};
+use std::sync::mpsc::{Receiver, Sender};
 use std::thread;
 use std::time::Duration;
 
@@ -10,8 +10,8 @@ use nesemu::memory::CpuMemory;
 use nesemu::Nes;
 use nesemu_cpu::cpu::CPU;
 
-use crate::app::NesemuGui;
 use crate::{create_channels, EmulatorMessage, GuiMessage};
+use crate::app::NesemuGui;
 
 pub fn run() {
     env_logger::init(); // Log to stderr (if you run with `RUST_LOG=debug`).
@@ -29,8 +29,6 @@ pub fn run() {
     nes.cpu.reset();
 
     let nes_ref = Arc::new(RwLock::new(nes));
-
-
 
 
     // Set up communication channels between emulator and GUI
@@ -68,7 +66,7 @@ pub fn run() {
             Box::new(NesemuGui::new(cc, gui_tx, nes_ref))
         }),
     )
-    .expect("Failed to start GUI")
+        .expect("Failed to start GUI")
 }
 
 fn spawn_emulator_thread(
@@ -77,7 +75,7 @@ fn spawn_emulator_thread(
     _gui_tx: Receiver<GuiMessage>,
 ) -> thread::JoinHandle<()> {
     thread::spawn(move || loop {
-        thread::sleep(Duration::from_millis(16));
+        thread::sleep(Duration::from_millis(100));
         let mut lock = emulator.write().unwrap();
         lock.cpu.clock();
         emulator_tx
