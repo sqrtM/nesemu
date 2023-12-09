@@ -17,7 +17,7 @@ pub enum AddressingMode {
     IZY,
 }
 
-impl CPU {
+impl<Bus: Read + Write> CPU<Bus> {
     pub fn address(&mut self, addressing_mode: AddressingMode) -> u8 {
         match addressing_mode {
             AddressingMode::IMP => {
