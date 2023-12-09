@@ -1,40 +1,49 @@
-use std::cell::RefCell;
-use std::rc::Rc;
-use std::sync::{Arc, Mutex, RwLock};
+use std::sync::{Arc, Mutex};
 
-use crate::memory::CpuMemory;
-use nesemu_core::{Read, Write};
+use nesemu_core::{Read, ReadFn, Write, WriteFn};
 
-pub struct Bus<Memory>
-where
-    Memory: Read + Write,
-{
-    pub ram: Arc<RwLock<Memory>>,
+pub struct Bus {
+    read: Mutex<Option<Box<dyn ReadFn>>>,
+    write: Mutex<Option<Box<dyn WriteFn>>>,
 }
 
-impl<Memory> Write for Bus<Memory>
-where
-    Memory: Read + Write,
-{
+impl Write for Bus {
     fn write(&mut self, addr: u16, data: u8) {
-        self.ram.write().unwrap().write(addr, data)
+        let mut write_closure = self
+            .write
+            .lock()
+            .unwrap()
+            .take()
+            .expect("No write closure set");
+        write_closure.write(addr, data);
     }
 }
 
-impl<Memory> Read for Bus<Memory>
-where
-    Memory: Read + Write,
-{
+impl Read for Bus {
     fn read(&self, addr: u16, _read_only: bool) -> u8 {
-        self.ram.read().unwrap().read(addr, false)
+        let read_closure = self
+            .read
+            .lock()
+            .unwrap()
+            .take()
+            .expect("No read closure set");
+        read_closure.read(addr, _read_only)
     }
 }
 
-impl<Memory> Bus<Memory>
-where
-    Memory: Read + Write,
-{
-    pub fn new(ram: Arc<RwLock<Memory>>) -> Self {
-        Bus { ram }
+impl Bus {
+    pub fn new() -> Self {
+        Bus {
+            read: Mutex::new(None),
+            write: Mutex::new(None),
+        }
+    }
+
+    pub fn set_read(&self, r: Box<dyn ReadFn>) {
+        *self.read.lock().unwrap() = Some(r);
+    }
+
+    pub fn set_write(&self, w: Box<dyn WriteFn>) {
+        *self.write.lock().unwrap() = Some(w);
     }
 }

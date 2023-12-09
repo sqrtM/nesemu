@@ -1,7 +1,6 @@
 use std::fmt::Debug;
 use std::fs::{File, OpenOptions};
 use std::io::Write as fsWrite;
-use std::sync::{Arc, RwLock};
 
 use serde::{Deserialize, Serialize};
 
@@ -11,8 +10,9 @@ use crate::addressing_mode::AddressingMode;
 use crate::cpu::StatusFlag::{B, C, D, I, N, U, V, Z};
 use crate::instruction::Instruction;
 
-pub struct CPU<Bus: Read + Write> {
-    bus: Arc<RwLock<Bus>>,
+pub struct CPU {
+    write: Box<dyn Fn(u16, u8)>,
+    read: Box<dyn Fn(u16, bool) -> u8>,
 
     pub acc_reg: u8,
     pub x_reg: u8,
@@ -84,21 +84,15 @@ impl StatusFlag {
     }
 }
 
-impl<Bus: Read + Write> Read for CPU<Bus> {
+impl Read for CPU {
     fn read(&self, addr: u16, _read_only: bool) -> u8 {
-        self.bus
-            .read()
-            .unwrap()
-            .read(addr, _read_only)
+        (self.read)(addr, _read_only)
     }
 }
 
-impl<Bus: Read + Write> Write for CPU<Bus> {
+impl Write for CPU {
     fn write(&mut self, addr: u16, data: u8) {
-        self.bus
-            .write()
-            .unwrap()
-            .write(addr, data)
+        (self.write)(addr, data)
     }
 }
 
@@ -119,7 +113,7 @@ pub struct CpuDebugInfo {
     pub cycles: u8,
 }
 
-impl<Bus: Read + Write> CPU<Bus> {
+impl CPU {
     pub fn clock(&mut self) {
         if self.cycles == 0 {
             self.opcode = self.read(self.pgrm_ctr, false);
@@ -194,7 +188,7 @@ impl<Bus: Read + Write> CPU<Bus> {
     }
 }
 
-impl<Bus: Read + Write> CPU<Bus> {
+impl CPU {
     pub fn get_flag(&self, flag: StatusFlag) -> u8 {
         if (self.status & flag.bit()) != 0 {
             1
@@ -228,10 +222,11 @@ impl<Bus: Read + Write> CPU<Bus> {
     }
 }
 
-impl<Bus: Read + Write> CPU<Bus> {
-    pub fn new(bus: Arc<RwLock<Bus>>) -> Self {
+impl CPU {
+    pub fn new(read: Box<dyn Fn(u16, bool) -> u8>, write: Box<dyn Fn(u16, u8)>) -> Self {
         CPU {
-            bus,
+            read,
+            write,
             acc_reg: 0,
             x_reg: 0,
             y_reg: 0,

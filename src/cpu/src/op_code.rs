@@ -1,8 +1,8 @@
 use nesemu_core::{Read, Write};
 
 use crate::addressing_mode::AddressingMode::IMP;
-use crate::cpu::CPU;
 use crate::cpu::StatusFlag::{B, C, D, I, N, U, V, Z};
+use crate::cpu::CPU;
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum Opcode {
@@ -66,7 +66,7 @@ pub enum Opcode {
     XXX,
 }
 
-impl<Bus: Read + Write> CPU<Bus> {
+impl CPU {
     pub fn operation(&mut self, opcode: Opcode) -> u8 {
         match opcode {
             Opcode::ADC => {
